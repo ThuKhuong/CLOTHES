@@ -1,0 +1,274 @@
+﻿
+/* =========================
+   1) DANH MỤC - NHÀ CUNG CẤP
+========================= */
+
+CREATE TABLE LOAISANPHAM (
+    MALOAI varchar(20) NOT NULL PRIMARY KEY,
+    TENLOAI nvarchar(100) NOT NULL
+);
+
+CREATE TABLE NHACUNGCAP (
+    MANCC varchar(20) NOT NULL PRIMARY KEY,
+    TENNCC nvarchar(150) NOT NULL,
+    SDT varchar(20) NULL,
+    DIACHI nvarchar(200) NULL,
+    EMAIL varchar(100) NULL
+);
+
+/* =========================
+   2) KHÁCH HÀNG - NGƯỜI DÙNG
+========================= */
+
+CREATE TABLE KHACHHANG (
+    MAKH varchar(20) NOT NULL PRIMARY KEY,
+    HOTEN nvarchar(100) NOT NULL,
+    GIOITINH nvarchar(10) NULL,
+    DCHI nvarchar(200) NULL,
+    SDT varchar(20) NOT NULL,
+    EMAIL varchar(100) NULL
+);
+
+CREATE TABLE NGUOIDUNG (
+    MAND varchar(20) NOT NULL PRIMARY KEY,
+    TENND nvarchar(100) NOT NULL,
+    NGSINH date NULL,
+    GIOITINH nvarchar(10) NULL,
+    SDT varchar(20) NOT NULL,
+    DIACHI nvarchar(200) NULL,
+
+    USERNAME varchar(50) NOT NULL,
+    PASS nvarchar(255) NOT NULL,      -- nên lưu hash
+    VAITRO nvarchar(20) NOT NULL DEFAULT(N'BANHANG'),  -- ADMIN / QUANLY / NHAP / BANHANG
+    TRANGTHAI bit NOT NULL DEFAULT(1),
+
+    AVA varchar(255) NULL,
+    EMAIL varchar(100) NULL
+);
+
+ALTER TABLE NGUOIDUNG
+ADD CONSTRAINT UQ_NGUOIDUNG_USERNAME UNIQUE (USERNAME);
+
+ALTER TABLE NGUOIDUNG
+ADD CONSTRAINT CK_NGUOIDUNG_VAITRO
+CHECK (VAITRO IN (N'ADMIN', N'QUANLY', N'NHAP', N'BANHANG'));
+
+/* =========================
+   3) SẢN PHẨM (MẪU) & BIẾN THỂ (SIZE/MÀU)
+========================= */
+
+-- Thông tin mẫu chung: tên, mô tả, loại, hình
+CREATE TABLE SANPHAM (
+    MASP varchar(20) NOT NULL PRIMARY KEY,
+    TENSP nvarchar(150) NOT NULL,
+    MALOAI varchar(20) NULL,
+    MOTA nvarchar(max) NULL,
+    HINHSP varchar(255) NULL,
+    TRANGTHAI bit NOT NULL DEFAULT(1)
+);
+
+ALTER TABLE SANPHAM
+ADD CONSTRAINT FK_SP_LOAI
+FOREIGN KEY (MALOAI) REFERENCES LOAISANPHAM(MALOAI);
+
+-- Biến thể/SKU: size, màu, giá bán, tồn kho
+CREATE TABLE SANPHAM_CHITIET (
+    MACT varchar(30) NOT NULL PRIMARY KEY,    -- mã biến thể/SKU
+    MASP varchar(20) NOT NULL,
+    SIZE nvarchar(20) NOT NULL,
+    MAU nvarchar(30) NOT NULL,
+    GIABAN decimal(18,2) NOT NULL DEFAULT(0),
+    TONKHO int NOT NULL DEFAULT(0),
+    BARCODE varchar(50) NULL,
+    TRANGTHAI bit NOT NULL DEFAULT(1)
+);
+
+ALTER TABLE SANPHAM_CHITIET
+ADD CONSTRAINT FK_SPCT_SP
+FOREIGN KEY (MASP) REFERENCES SANPHAM(MASP);
+
+-- 1 mẫu không được có 2 biến thể trùng size+màu
+ALTER TABLE SANPHAM_CHITIET
+ADD CONSTRAINT UQ_SPCT_MASP_SIZE_MAU UNIQUE (MASP, SIZE, MAU);
+
+/* =========================
+   4) KHUYẾN MÃI (TÙY CHỌN DÙNG)
+========================= */
+
+CREATE TABLE KHUYENMAI (
+    MAKM varchar(20) NOT NULL PRIMARY KEY,
+    TENKM nvarchar(150) NOT NULL,
+    PHANTRAM_GIAM int NOT NULL,       -- Ví dụ: 10 = giảm 10%
+
+    NGAYBD datetime NOT NULL,
+    NGAYKT datetime NOT NULL,
+
+    TRANGTHAI bit NOT NULL DEFAULT(1)
+);
+ALTER TABLE KHUYENMAI
+ADD CONSTRAINT CK_KM_PHANTRAM
+CHECK (PHANTRAM_GIAM > 0 AND PHANTRAM_GIAM <= 100);
+/* =========================
+   5) HÓA ĐƠN - CHI TIẾT HÓA ĐƠN
+========================= */
+
+CREATE TABLE HOADON (
+    SOHD int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    MAND varchar(20) NOT NULL,
+    MAKH varchar(20) NULL,
+    NGHD datetime NOT NULL DEFAULT(GETDATE()),
+    MAKM varchar(20) NULL,
+
+    TONGTIEN1 decimal(18,2) NOT NULL DEFAULT(0), -- tổng trước giảm
+    GIAMGIA  decimal(18,2) NOT NULL DEFAULT(0),
+    TONGTIEN2   decimal(18,2) NOT NULL DEFAULT(0), -- tổng sau giảm
+
+    HINHTHUCTT nvarchar(20) NULL,              -- CASH/BANK/...
+    TRANGTHAI nvarchar(20) NOT NULL DEFAULT(N'DATHANHTOAN'), -- DATHANHTOAN/HUY/...
+    GHICHU nvarchar(300) NULL
+);
+
+ALTER TABLE HOADON
+ADD CONSTRAINT FK_HD_ND FOREIGN KEY (MAND) REFERENCES NGUOIDUNG(MAND);
+
+ALTER TABLE HOADON
+ADD CONSTRAINT FK_HD_KH FOREIGN KEY (MAKH) REFERENCES KHACHHANG(MAKH);
+
+ALTER TABLE HOADON
+ADD CONSTRAINT FK_HD_KM FOREIGN KEY (MAKM) REFERENCES KHUYENMAI(MAKM);
+
+-- Chi tiết hóa đơn theo biến thể (MACT)
+CREATE TABLE CTHD (
+    SOHD int NOT NULL,
+    MACT varchar(30) NOT NULL,
+    SL int NOT NULL,
+    DONGIA decimal(18,2) NOT NULL,           -- giá tại thời điểm bán
+    GIAMGIA decimal(18,2) NOT NULL DEFAULT(0),
+    PRIMARY KEY (SOHD, MACT)
+);
+ALTER TABLE CTHD
+ADD CONSTRAINT FK_CTHD_HD FOREIGN KEY (SOHD) REFERENCES HOADON(SOHD);
+
+ALTER TABLE CTHD
+ADD CONSTRAINT FK_CTHD_SPCT FOREIGN KEY (MACT) REFERENCES SANPHAM_CHITIET(MACT);
+
+/* =========================
+   6) PHIẾU NHẬP - CHI TIẾT PHIẾU NHẬP
+========================= */
+
+CREATE TABLE PHIEUNHAP (
+    MAPN int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    MAND varchar(20) NOT NULL,
+    MANCC varchar(20) NOT NULL,
+    NGAYNHAP datetime NOT NULL DEFAULT(GETDATE()),
+    GHICHU nvarchar(300) NULL,
+    TONGTIEN decimal(18,2) NOT NULL DEFAULT(0)
+);
+
+ALTER TABLE PHIEUNHAP
+ADD CONSTRAINT FK_PN_ND FOREIGN KEY (MAND) REFERENCES NGUOIDUNG(MAND);
+
+ALTER TABLE PHIEUNHAP
+ADD CONSTRAINT FK_PN_NCC FOREIGN KEY (MANCC) REFERENCES NHACUNGCAP(MANCC);
+
+-- Chi tiết phiếu nhập theo biến thể (MACT)
+CREATE TABLE CTPN (
+    MAPN int NOT NULL,
+    MACT varchar(30) NOT NULL,
+    SL int NOT NULL,
+    DONGIA_NHAP decimal(18,2) NOT NULL,      -- giá nhập tại thời điểm nhập
+    PRIMARY KEY (MAPN, MACT)
+);
+
+ALTER TABLE CTPN
+ADD CONSTRAINT FK_CTPN_PN FOREIGN KEY (MAPN) REFERENCES PHIEUNHAP(MAPN);
+
+ALTER TABLE CTPN
+ADD CONSTRAINT FK_CTPN_SPCT FOREIGN KEY (MACT) REFERENCES SANPHAM_CHITIET(MACT);
+
+/* =========================
+   7) INDEX GỢI Ý (tìm nhanh)
+========================= */
+CREATE INDEX IX_SPCT_MASP ON SANPHAM_CHITIET(MASP);
+CREATE INDEX IX_CTHD_SOHD ON CTHD(SOHD);
+CREATE INDEX IX_CTPN_MAPN ON CTPN(MAPN);
+GO
+/* =========================
+1) CHECK số lượng – giá – tồn kho
+========================= */
+
+ALTER TABLE CTHD  
+ADD CONSTRAINT CK_CTHD_SL CHECK (SL > 0);
+
+ALTER TABLE CTHD  
+ADD CONSTRAINT CK_CTHD_DONGIA CHECK (DONGIA >= 0);
+
+ALTER TABLE CTPN  
+ADD CONSTRAINT CK_CTPN_SL CHECK (SL > 0);
+
+ALTER TABLE CTPN  
+ADD CONSTRAINT CK_CTPN_DONGIA CHECK (DONGIA_NHAP >= 0);
+
+ALTER TABLE SANPHAM_CHITIET 
+ADD CONSTRAINT CK_SPCT_TONKHO CHECK (TONKHO >= 0);
+
+ALTER TABLE SANPHAM_CHITIET 
+ADD CONSTRAINT CK_SPCT_GIABAN CHECK (GIABAN >= 0);
+
+
+/* =========================
+2) UNIQUE dữ liệu quan trọng
+========================= */
+
+ALTER TABLE KHACHHANG 
+ADD CONSTRAINT UQ_KH_SDT UNIQUE (SDT);
+
+-- Nếu bạn muốn email nhân viên không trùng thì mở dòng dưới
+-- ALTER TABLE NGUOIDUNG 
+-- ADD CONSTRAINT UQ_ND_EMAIL UNIQUE (EMAIL);
+
+
+/* =========================
+3) CHECK khuyến mãi
+========================= */
+
+ALTER TABLE KHUYENMAI
+ADD CONSTRAINT CK_KM_NGAY CHECK (NGAYKT >= NGAYBD);
+
+
+/* =========================
+4) CHECK trạng thái & hình thức thanh toán hóa đơn
+========================= */
+
+ALTER TABLE HOADON
+ADD CONSTRAINT CK_HD_TRANGTHAI 
+CHECK (TRANGTHAI IN (N'DATHANHTOAN', N'HUY'));
+
+ALTER TABLE HOADON
+ADD CONSTRAINT CK_HD_HTTT 
+CHECK (HINHTHUCTT IN (N'CASH', N'BANK', N'MOMO') OR HINHTHUCTT IS NULL);
+
+
+/* =========================
+5) CASCADE cho bảng chi tiết (dễ xóa test dữ liệu)
+========================= */
+
+ALTER TABLE CTHD DROP CONSTRAINT FK_CTHD_HD;
+ALTER TABLE CTHD
+ADD CONSTRAINT FK_CTHD_HD 
+FOREIGN KEY (SOHD) REFERENCES HOADON(SOHD)
+ON DELETE CASCADE;
+
+ALTER TABLE CTPN DROP CONSTRAINT FK_CTPN_PN;
+ALTER TABLE CTPN
+ADD CONSTRAINT FK_CTPN_PN 
+FOREIGN KEY (MAPN) REFERENCES PHIEUNHAP(MAPN)
+ON DELETE CASCADE;
+
+
+/* =========================
+6) INDEX tăng tốc tìm kiếm
+========================= */
+
+CREATE INDEX IX_SPCT_BARCODE ON SANPHAM_CHITIET(BARCODE);
+CREATE INDEX IX_SP_TENSP ON SANPHAM(TENSP);

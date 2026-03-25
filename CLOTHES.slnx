@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CLOTHES/CLOTHES.csproj" />
+  <Project Path="QLBH.BLL/QLBH.BLL.csproj" />
+  <Project Path="QLBH.DAL/QLBH.DAL.csproj" />
+  <Project Path="QLBH.DTO/QLBH.DTO.csproj" />
+</Solution>

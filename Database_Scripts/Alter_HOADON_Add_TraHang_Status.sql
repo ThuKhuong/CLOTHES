@@ -1,0 +1,21 @@
+-- Updates CHECK constraint CK_HD_TRANGTHAI to allow 'TRAHANG' in addition to existing values.
+-- Current definition (per your screenshot): ([TRANGTHAI]=N'HUY' OR [TRANGTHAI]=N'DATHANHTOAN')
+
+BEGIN TRY
+    BEGIN TRAN;
+
+    IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_HD_TRANGTHAI')
+    BEGIN
+        ALTER TABLE dbo.HOADON DROP CONSTRAINT CK_HD_TRANGTHAI;
+    END
+
+    ALTER TABLE dbo.HOADON
+    ADD CONSTRAINT CK_HD_TRANGTHAI
+    CHECK (TRANGTHAI IN (N'HUY', N'DATHANHTOAN', N'TRAHANG'));
+
+    COMMIT TRAN;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK TRAN;
+    THROW;
+END CATCH;
