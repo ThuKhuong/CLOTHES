@@ -16,7 +16,13 @@ namespace CLOTHES
 
         private const bool ShowExperimentalMenuItems = false;
 
-        private bool IsAdmin => _currentUser.VaiTro.Equals("ADMIN", StringComparison.OrdinalIgnoreCase);
+        private bool IsRole(string role) =>
+            _currentUser.VaiTro.Equals(role, StringComparison.OrdinalIgnoreCase);
+
+        private bool IsAdmin => IsRole("ADMIN");
+        private bool IsQuanLy => IsRole("QUANLY");
+        private bool IsNhanVienNhap => IsRole("NHANVIENNHAP");
+        private bool IsNhanVienBanHang => IsRole("NHANVIENBANHANG");
 
         public FrmMain(NguoiDungDto user)
         {
@@ -184,11 +190,9 @@ namespace CLOTHES
                 Padding = new Padding(10, 10, 10, 10),
                 AutoScroll = true,
                 AutoScrollMargin = new Size(0, 60),
-                Font = new Font("Segoe UI", 9F, FontStyle.Regular) // Ensure Vietnamese support
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular)
             };
 
-            // Reserve space for the top user panel so the first button isn't hidden under it.
-            // (Some WinForms layouts can still overlap Top and Fill docked panels.)
             var topSpacer = new Panel
             {
                 Dock = DockStyle.Top,
@@ -197,27 +201,36 @@ namespace CLOTHES
             };
             buttonsPanel.Controls.Add(topSpacer);
 
-            // Build hierarchical menu (with basic authorization)
             var list = new System.Collections.Generic.List<(string Text, string Icon, int Indent, Action Action)>();
             list.Add(("TRANG CHỦ", "🏠", 0, ShowDashboard));
 
-         list.Add(("BÁN HÀNG", "📦", 0, () => OpenChildForm(() => new FrmBanHang(_currentUser))));
-            list.Add(("ĐƠN HÀNG", "📄", 1, () => OpenChildForm<FrmHoaDon>()));
-            list.Add(("SẢN PHẨM", "🛒", 1, () => OpenChildForm<FrmSanPham>()));
-
-            list.Add(("KHÁCH HÀNG", "👤", 0, () => OpenChildForm<FrmKhachHang>()));
-
-            if (IsAdmin)
+            if (IsAdmin || IsQuanLy || IsNhanVienBanHang)
             {
-               list.Add(("NGƯỜI DÙNG", "👥", 0, () => OpenChildForm(() => new FrmNguoiDung(_currentUser))));
-               list.Add(("NHẬP HÀNG", "📥", 0, () => OpenChildForm(() => new FrmNhapHang(_currentUser))));
+                list.Add(("BÁN HÀNG", "📦", 0, () => OpenChildForm(() => new FrmBanHang(_currentUser))));
+                list.Add(("ĐƠN HÀNG", "📄", 1, () => OpenChildForm<FrmHoaDon>()));
+                list.Add(("KHÁCH HÀNG", "👤", 0, () => OpenChildForm<FrmKhachHang>()));
+            }
+
+            if (IsAdmin || IsQuanLy || IsNhanVienNhap || IsNhanVienBanHang)
+            {
+                list.Add(("SẢN PHẨM", "🛒", 0, () => OpenChildForm<FrmSanPham>()));
+            }
+
+            if (IsAdmin || IsQuanLy || IsNhanVienNhap)
+            {
+                list.Add(("NHẬP HÀNG", "📥", 0, () => OpenChildForm(() => new FrmNhapHang(_currentUser))));
                 list.Add(("PHIẾU NHẬP", "🧾", 0, () => OpenChildForm<FrmPhieuNhap>()));
+            }
+
+            if (IsAdmin || IsQuanLy)
+            {
                 list.Add(("KHUYẾN MÃI", "🏷", 0, () => OpenChildForm<FrmKhuyenMai>()));
                 list.Add(("THỐNG KÊ", "📊", 0, () => OpenChildForm<FrmThongKe>()));
             }
-            else
+
+            if (IsAdmin)
             {
-                // Non-admin users still can see reports but not open them? Prefer hiding to avoid confusion.
+                list.Add(("NGƯỜI DÙNG", "👥", 0, () => OpenChildForm(() => new FrmNguoiDung(_currentUser))));
             }
 
             if (ShowExperimentalMenuItems && IsAdmin)
@@ -236,14 +249,12 @@ namespace CLOTHES
             for (int i = 0; i < menuItems.Length; i++)
             {
                 var menuItem = menuItems[i];
-
-               var button = CreateSidebarButton(menuItem.Text, menuItem.Icon, menuItem.Action, menuItem.Indent);
+                var button = CreateSidebarButton(menuItem.Text, menuItem.Icon, menuItem.Action, menuItem.Indent);
                 button.Location = new Point(buttonsPanel.Padding.Left, yPos);
                 button.Width = buttonsPanel.ClientSize.Width - buttonsPanel.Padding.Left - buttonsPanel.Padding.Right;
-
                 button.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-                
-                if (i == 0) // Select first button by default
+
+                if (i == 0)
                 {
                     SelectButton(button);
                     menuItem.Action.Invoke();
@@ -253,9 +264,7 @@ namespace CLOTHES
                 yPos += button.Height + 5;
             }
 
-            // Ensure scrolling area is big enough for all items.
             buttonsPanel.AutoScrollMinSize = new Size(0, yPos + buttonsPanel.Padding.Bottom);
-
             parent.Controls.Add(buttonsPanel);
         }
 
@@ -646,19 +655,18 @@ namespace CLOTHES
 
         private void SetupPermissions()
         {
-            bool isAdmin = IsAdmin;
-            
-            // Ch? ADMIN m?i th?y báo cáo
-            menuBaoCao.Visible = isAdmin;
+            menuBaoCao.Visible = IsAdmin || IsQuanLy;
 
-            // If these menus exist, restrict them as well
-            if (menuNhapHang != null)
-                menuNhapHang.Visible = isAdmin;
-            if (menuLoaiSanPham != null)
-                menuLoaiSanPham.Visible = isAdmin;
-            
-            // Có th? thêm các quy?n khác ? ?ây
-            // menuNhaCungCap.Visible = isAdmin;
+            menuNhapHang.Visible = IsAdmin || IsQuanLy || IsNhanVienNhap;
+            menuKho.Visible = IsAdmin || IsQuanLy || IsNhanVienNhap;
+
+            menuBanHang.Visible = IsAdmin || IsQuanLy || IsNhanVienBanHang;
+            menuKhachHang.Visible = IsAdmin || IsQuanLy || IsNhanVienBanHang;
+
+            menuSanPham.Visible = IsAdmin || IsQuanLy || IsNhanVienNhap || IsNhanVienBanHang;
+            menuLoaiSanPham.Visible = IsAdmin || IsQuanLy || IsNhanVienNhap || IsNhanVienBanHang;
+
+            menuKhuyenMai.Visible = IsAdmin || IsQuanLy;
         }
 
         private void timer_Tick(object sender, EventArgs e)

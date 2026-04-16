@@ -54,6 +54,7 @@ WHERE USERNAME = @u";
             {
                 MaND = r["MAND"].ToString() ?? "",
                 TenND = r["TENND"].ToString() ?? "",
+                Sdt = r["SDT"].ToString() ?? "",
                 Username = r["USERNAME"].ToString() ?? "",
                 VaiTro = r["VAITRO"].ToString() ?? "NHANVIEN",
                 TrangThai = (bool)r["TRANGTHAI"]

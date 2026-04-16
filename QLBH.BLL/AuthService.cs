@@ -82,5 +82,36 @@ namespace QLBH.BLL
 
             return rows > 0 ? (true, "Đăng ký thành công.") : (false, "Đăng ký thất bại.");
         }
+
+        public (bool ok, string message) ForgotPassword(string username, string sdt, string newPassword, string confirmPassword)
+        {
+            if (string.IsNullOrWhiteSpace(username) ||
+                string.IsNullOrWhiteSpace(sdt) ||
+                string.IsNullOrWhiteSpace(newPassword) ||
+                string.IsNullOrWhiteSpace(confirmPassword))
+            {
+                return (false, "Vui lòng nhập đầy đủ thông tin.");
+            }
+
+            if (!string.Equals(newPassword, confirmPassword, StringComparison.Ordinal))
+                return (false, "Mật khẩu xác nhận không khớp.");
+
+            username = username.Trim();
+            sdt = sdt.Trim();
+
+            var (user, _) = _dal.GetByUsername(username);
+            if (user == null)
+                return (false, "Tài khoản không tồn tại.");
+
+            if (!user.TrangThai)
+                return (false, "Tài khoản đang bị khóa.");
+
+            if (!string.Equals(user.Sdt?.Trim(), sdt, StringComparison.Ordinal))
+                return (false, "Số điện thoại không khớp.");
+
+            var hash = PasswordHasher.Hash(newPassword);
+            var rows = _dal.UpdatePassword(username, hash);
+            return rows > 0 ? (true, "Đặt lại mật khẩu thành công.") : (false, "Không thể đặt lại mật khẩu.");
+        }
     }
 }

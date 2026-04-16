@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -6,7 +6,7 @@ using QLBH.BLL;
 
 namespace CLOTHES
 {
-    public partial class FrmRegister : Form
+    public partial class FrmForgotPassword : Form
     {
         private const int WM_NCHITTEST = 0x84;
         private const int HTCLIENT = 1;
@@ -14,12 +14,20 @@ namespace CLOTHES
 
         private readonly AuthService _auth = new();
 
-        public string? RegisteredUsername { get; private set; }
+        public string? ResetUsername { get; private set; }
 
-        public FrmRegister()
+        public FrmForgotPassword()
         {
             InitializeComponent();
             BuildUI();
+        }
+
+        private void InitializeComponent()
+        {
+            SuspendLayout();
+            AutoScaleMode = AutoScaleMode.Font;
+            Name = "FrmForgotPassword";
+            ResumeLayout(false);
         }
 
         protected override void WndProc(ref Message m)
@@ -31,18 +39,18 @@ namespace CLOTHES
 
         private void BuildUI()
         {
-            Text = "Register";
+            Text = "Forgot Password";
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = Color.FromArgb(253, 248, 244);
-            ClientSize = new Size(900, 600); // ✅ Fixed size to match login form
+            ClientSize = new Size(900, 600);
             DoubleBuffered = true;
             ApplyRoundedCorners(this, 28);
 
             var right = new Panel
             {
                 Dock = DockStyle.Right,
-                Width = 450, // ✅ Reduced from 650 to match login form
+                Width = 450,
                 BackColor = BackColor
             };
             Controls.Add(right);
@@ -75,91 +83,85 @@ namespace CLOTHES
 
             var lblTitle = new Label
             {
-                Text = "Tạo tài khoản",
-                Font = new Font("Segoe UI", 18, FontStyle.Bold), // ✅ Reduced from 22 to match login form
+                Text = "Quên mật khẩu",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
                 ForeColor = Color.FromArgb(40, 40, 40),
                 AutoSize = true,
-                Location = new Point(50, 80) // ✅ Adjusted position
+                Location = new Point(50, 80)
             };
             right.Controls.Add(lblTitle);
 
             var line = new Panel
             {
                 BackColor = Color.FromArgb(92, 85, 255),
-                Size = new Size(320, 4), // ✅ Reduced from 420x5 to match login form
-                Location = new Point(50, 130) // ✅ Adjusted position
+                Size = new Size(320, 4),
+                Location = new Point(50, 130)
             };
             right.Controls.Add(line);
 
-            var nameRow = CreateInputRow("🧑", "Họ tên", out TextBox txtTenNd);
-            nameRow.Location = new Point(50, 160); // ✅ Adjusted positions to fit smaller form
-            right.Controls.Add(nameRow);
-
-            var phoneRow = CreateInputRow("📞", "Số điện thoại", out TextBox txtSdt);
-            phoneRow.Location = new Point(50, 230); // ✅ Adjusted spacing
-            right.Controls.Add(phoneRow);
-
             var userRow = CreateInputRow("👤", "Tên đăng nhập", out TextBox txtUser);
-            userRow.Location = new Point(50, 300); // ✅ Adjusted spacing
+            userRow.Location = new Point(50, 180);
             right.Controls.Add(userRow);
 
-            var passRow = CreateInputRow("🔑", "Mật khẩu", out TextBox txtPass);
-            passRow.Location = new Point(50, 370); // ✅ Adjusted spacing
+            var phoneRow = CreateInputRow("📞", "Số điện thoại", out TextBox txtPhone);
+            phoneRow.Location = new Point(50, 260);
+            right.Controls.Add(phoneRow);
+
+            var passRow = CreateInputRow("🔑", "Mật khẩu mới", out TextBox txtPass);
+            passRow.Location = new Point(50, 340);
             right.Controls.Add(passRow);
 
             var confirmRow = CreateInputRow("🔒", "Xác nhận mật khẩu", out TextBox txtConfirm);
-            confirmRow.Location = new Point(50, 440); // ✅ Adjusted spacing
+            confirmRow.Location = new Point(50, 420);
             right.Controls.Add(confirmRow);
 
-            SetupPlaceholder(txtTenNd, "Họ tên");
-            SetupPlaceholder(txtSdt, "Số điện thoại");
             SetupPlaceholder(txtUser, "Tên đăng nhập");
-            SetupPlaceholder(txtPass, "Mật khẩu");
+            SetupPlaceholder(txtPhone, "Số điện thoại");
+            SetupPlaceholder(txtPass, "Mật khẩu mới");
             SetupPlaceholder(txtConfirm, "Xác nhận mật khẩu");
 
-            var btnRegister = new Button
+            var btnReset = new Button
             {
-                Text = "Đăng ký",
-                Font = new Font("Segoe UI", 12, FontStyle.Bold), // ✅ Reduced from 14 to match login form
+                Text = "Đặt lại mật khẩu",
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
                 ForeColor = Color.White,
                 BackColor = Color.FromArgb(92, 85, 255),
                 FlatStyle = FlatStyle.Flat,
-                Size = new Size(280, 55), // ✅ Reduced from 320x65 to match login form
-                Location = new Point(85, 520), // ✅ Adjusted position
+                Size = new Size(280, 55),
+                Location = new Point(85, 520),
                 Cursor = Cursors.Hand
             };
-            btnRegister.FlatAppearance.BorderSize = 0;
-            btnRegister.Region = new Region(CreateRoundedRect(btnRegister.ClientRectangle, 28));
-            right.Controls.Add(btnRegister);
+            btnReset.FlatAppearance.BorderSize = 0;
+            btnReset.Region = new Region(CreateRoundedRect(btnReset.ClientRectangle, 28));
+            right.Controls.Add(btnReset);
 
-            btnRegister.Click += (s, e) =>
+            btnReset.Click += (s, e) =>
             {
-                string tenNd = GetTextOrEmpty(txtTenNd, "Họ tên");
-                string sdt = GetTextOrEmpty(txtSdt, "Số điện thoại");
                 string username = GetTextOrEmpty(txtUser, "Tên đăng nhập");
-                string password = GetTextOrEmpty(txtPass, "Mật khẩu");
+                string phone = GetTextOrEmpty(txtPhone, "Số điện thoại");
+                string password = GetTextOrEmpty(txtPass, "Mật khẩu mới");
                 string confirm = GetTextOrEmpty(txtConfirm, "Xác nhận mật khẩu");
 
-                var (ok, message) = _auth.Register(tenNd, sdt, username, password, confirm);
+                var (ok, message) = _auth.ForgotPassword(username, phone, password, confirm);
                 MessageBox.Show(message);
 
                 if (ok)
                 {
-                    RegisteredUsername = username;
+                    ResetUsername = username.Trim();
                     DialogResult = DialogResult.OK;
                     Close();
                 }
             };
 
-            var lblHasAccount = new Label
+            var lblBack = new Label
             {
-                Text = "Đã có tài khoản?",
+                Text = "Quay lại",
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10),
                 ForeColor = Color.FromArgb(80, 80, 80),
-                Location = new Point(120, 585)
+                Location = new Point(190, 490)
             };
-            right.Controls.Add(lblHasAccount);
+            right.Controls.Add(lblBack);
 
             var linkLogin = new LinkLabel
             {
@@ -167,7 +169,7 @@ namespace CLOTHES
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10),
                 LinkColor = Color.FromArgb(92, 85, 255),
-                Location = new Point(lblHasAccount.Right + 6, 585)
+                Location = new Point(lblBack.Right + 6, 490)
             };
             linkLogin.Click += (s, e) => Close();
             right.Controls.Add(linkLogin);
@@ -180,29 +182,43 @@ namespace CLOTHES
         {
             var row = new Panel
             {
-                Size = new Size(350, 65), // ✅ Reduced from 500x90 to match login form
+                Size = new Size(350, 65),
                 BackColor = Color.Transparent
             };
 
             var border = new Panel
             {
-                Size = new Size(350, 55), // ✅ Reduced from 500x80 to match login form
+                Size = new Size(350, 55),
                 Location = new Point(0, 10),
                 BackColor = Color.White
             };
             row.Controls.Add(border);
 
+            var table = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1,
+                BackColor = Color.Transparent,
+                Padding = new Padding(8, 0, 8, 0)
+            };
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            border.Controls.Add(table);
+
             var lblIcon = new Label
             {
                 Text = icon,
+                Dock = DockStyle.Fill,
                 AutoSize = false,
-                Size = new Size(24, border.Height),
-                Location = new Point(12, 0),
                 TextAlign = ContentAlignment.MiddleCenter,
                 Font = new Font("Segoe UI Emoji", 14, FontStyle.Regular),
                 ForeColor = Color.Gray
             };
-            border.Controls.Add(lblIcon);
+            table.Controls.Add(lblIcon, 0, 0);
+
+            var host = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
+            table.Controls.Add(host, 1, 0);
 
             textBox = new TextBox
             {
@@ -211,10 +227,10 @@ namespace CLOTHES
                 ForeColor = Color.Gray,
                 BackColor = Color.White,
                 Text = placeholder,
-                Width = border.Width - 56,
-                Location = new Point(44, (border.Height - 24) / 2)
+                Width = 280,
+                Location = new Point(0, 12)
             };
-            border.Controls.Add(textBox);
+            host.Controls.Add(textBox);
 
             border.Paint += (s, e) =>
             {
@@ -222,7 +238,7 @@ namespace CLOTHES
                 using var pen = new Pen(Color.FromArgb(200, 200, 200), 2);
 
                 var r = new Rectangle(1, 1, border.Width - 2, border.Height - 2);
-                e.Graphics.DrawPath(pen, CreateRoundedRect(r, 12)); // ✅ Reduced radius from 14 to match login form
+                e.Graphics.DrawPath(pen, CreateRoundedRect(r, 12));
             };
 
             return row;
@@ -236,7 +252,7 @@ namespace CLOTHES
                 {
                     tb.Text = "";
                     tb.ForeColor = Color.Black;
-                    if (placeholder is "Mật khẩu" or "Xác nhận mật khẩu")
+                    if (placeholder is "Mật khẩu mới" or "Xác nhận mật khẩu")
                         tb.UseSystemPasswordChar = true;
                 }
             };
@@ -245,7 +261,7 @@ namespace CLOTHES
             {
                 if (string.IsNullOrWhiteSpace(tb.Text))
                 {
-                    if (placeholder is "Mật khẩu" or "Xác nhận mật khẩu")
+                    if (placeholder is "Mật khẩu mới" or "Xác nhận mật khẩu")
                         tb.UseSystemPasswordChar = false;
                     tb.Text = placeholder;
                     tb.ForeColor = Color.Gray;

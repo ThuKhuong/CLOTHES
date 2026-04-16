@@ -116,46 +116,45 @@ namespace CLOTHES
             var lblTitle = new Label
             {
                 Text = "Chào mừng trở lại",
-                Font = new Font("Segoe UI", 18, FontStyle.Bold), // ✅ Giảm từ 22
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
                 ForeColor = Color.FromArgb(40, 40, 40),
                 AutoSize = true,
-                Location = new Point(50, 80) // ✅ Điều chỉnh vị trí
+                Location = new Point(50, 80) 
             };
             right.Controls.Add(lblTitle);
 
             var line = new Panel
             {
                 BackColor = Color.FromArgb(92, 85, 255),
-                Size = new Size(320, 4), // ✅ Giảm từ 420
-                Location = new Point(50, 130) // ✅ Điều chỉnh vị trí
+                Size = new Size(320, 4), 
+                Location = new Point(50, 130) 
             };
             right.Controls.Add(line);
 
             // ===== Username =====
-            var userRow = CreateInputRow("👤", "Tên đăng nhập", out TextBox txtUser);
-            userRow.Location = new Point(50, 180); // ✅ Điều chỉnh vị trí
+       var userRow = CreateInputRow("👤", "Tên đăng nhập", out TextBox txtUser);
+            userRow.Location = new Point(50, 180);
             _txtUsername = txtUser;
             right.Controls.Add(userRow);
 
             // ===== Password =====
-            var passRow = CreateInputRow("🔑", "Mật khẩu", out TextBox txtPass);
-            passRow.Location = new Point(50, 270); // ✅ Điều chỉnh vị trí
+        var passRow = CreateInputRow("🔑", "Mật khẩu", out TextBox txtPass, true);
+            passRow.Location = new Point(50, 270); 
             _txtPassword = txtPass;
             right.Controls.Add(passRow);
 
-            SetupPlaceholder(txtUser, "Tên đăng nhập");
-            SetupPlaceholder(txtPass, "Mật khẩu");
+        SetupPlaceholder(txtUser, "Tên đăng nhập");
 
             // ===== Login Button =====
             var btnLogin = new Button
             {
                 Text = "Đăng nhập",
-                Font = new Font("Segoe UI", 12, FontStyle.Bold), // ✅ Giảm từ 14
+                Font = new Font("Segoe UI", 12, FontStyle.Bold), 
                 ForeColor = Color.White,
                 BackColor = Color.FromArgb(92, 85, 255),
                 FlatStyle = FlatStyle.Flat,
-                Size = new Size(280, 55), // ✅ Giảm từ 320x65
-                Location = new Point(85, 360), // ✅ Điều chỉnh vị trí
+                Size = new Size(280, 55), 
+                Location = new Point(85, 360), 
                 Cursor = Cursors.Hand
             };
             btnLogin.FlatAppearance.BorderSize = 0;
@@ -219,9 +218,9 @@ namespace CLOTHES
             {
                 Text = "Đăng ký",
                 AutoSize = true,
-                Font = new Font("Segoe UI", 10), // ✅ Giảm từ 11
+                Font = new Font("Segoe UI", 10),
                 LinkColor = Color.FromArgb(92, 85, 255),
-                Location = new Point(120, 480) // ✅ Điều chỉnh vị trí
+                Location = new Point(120, 480)
             };
             linkRegister.LinkClicked += LinkRegister_LinkClicked;
             right.Controls.Add(linkRegister);
@@ -230,10 +229,11 @@ namespace CLOTHES
             {
                 Text = "Quên mật khẩu",
                 AutoSize = true,
-                Font = new Font("Segoe UI", 10), // ✅ Giảm từ 11
+                Font = new Font("Segoe UI", 10), 
                 LinkColor = Color.FromArgb(92, 85, 255),
-                Location = new Point(250, 480) // ✅ Điều chỉnh vị trí
+                Location = new Point(250, 480) 
             };
+            linkForgot.LinkClicked += LinkForgot_LinkClicked;
             right.Controls.Add(linkForgot);
         }
 
@@ -261,63 +261,110 @@ namespace CLOTHES
             }
         }
 
+        private void LinkForgot_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
+        {
+            using var frm = new FrmForgotPassword();
+            if (frm.ShowDialog(this) == DialogResult.OK)
+            {
+                if (_txtUsername != null && !string.IsNullOrWhiteSpace(frm.ResetUsername))
+                {
+                    _txtUsername.Text = frm.ResetUsername;
+                    _txtUsername.ForeColor = Color.FromArgb(40, 40, 40);
+                }
+
+                if (_txtPassword != null)
+                {
+                    _txtPassword.Text = "Mật khẩu";
+                    _txtPassword.ForeColor = Color.Gray;
+                    _txtPassword.UseSystemPasswordChar = false;
+                    _txtPassword.Focus();
+                }
+            }
+        }
+
         // ===== Input Row =====
-        private Panel CreateInputRow(string icon, string placeholder, out TextBox textBox)
+  private Panel CreateInputRow(string icon, string placeholder, out TextBox textBox, bool withToggle = false)
         {
             var row = new Panel
             {
-                Size = new Size(350, 75), // ✅ Giảm từ 500x90
+                Size = new Size(350, 75), 
                 BackColor = Color.Transparent
             };
 
             // Khung viền
             var border = new Panel
             {
-                Size = new Size(350, 65), // ✅ Giảm từ 500x80
+                Size = new Size(350, 65), 
                 Location = new Point(0, 10),
                 BackColor = Color.White
             };
             row.Controls.Add(border);
 
-            // Dùng TableLayout để icon và textbox không bao giờ đè nhau
-            var table = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                RowCount = 1,
-                BackColor = Color.Transparent,
-                Padding = new Padding(8, 0, 8, 0) // ✅ Giảm padding
-            };
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50));  // ✅ Giảm từ 60
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            border.Controls.Add(table);
-
             var lblIcon = new Label
             {
                 Text = icon,
-                Dock = DockStyle.Fill,
                 AutoSize = false,
+                Size = new Size(24, border.Height),
+                Location = new Point(12, 0),
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI Emoji", 14, FontStyle.Regular), // ✅ Giảm từ 16
+                Font = new Font("Segoe UI Emoji", 14, FontStyle.Regular),
                 ForeColor = Color.Gray
             };
-            table.Controls.Add(lblIcon, 0, 0);
-
-            // Panel bọc textbox để canh giữa theo chiều dọc
-            var host = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
-            table.Controls.Add(host, 1, 0);
+            border.Controls.Add(lblIcon);
 
             textBox = new TextBox
             {
                 BorderStyle = BorderStyle.None,
-                Font = new Font("Segoe UI", 11, FontStyle.Regular), // ✅ Giảm từ 13
+                Font = new Font("Segoe UI", 11, FontStyle.Regular),
                 ForeColor = Color.Gray,
                 BackColor = Color.White,
                 Text = placeholder,
-                Width = 280, // ✅ Giảm từ 390
-                Location = new Point(0, 15) // ✅ Điều chỉnh canh dọc
+                Width = border.Width - (withToggle ? 86 : 56),
+                Location = new Point(44, (border.Height - 24) / 2)
             };
-            host.Controls.Add(textBox);
+            var tb = textBox;
+            border.Controls.Add(textBox);
+
+            if (withToggle)
+            {
+                var isVisible = false;
+             var btnEye = new Button
+                {
+                    Text = "🙈",
+                    Font = new Font("Segoe UI Emoji", 11, FontStyle.Regular),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Color.White,
+                    ForeColor = Color.Gray,
+                    Size = new Size(28, 28),
+                    Location = new Point(border.Width - 34, (border.Height - 28) / 2),
+                    TabStop = false,
+                    Cursor = Cursors.Hand
+                };
+                btnEye.FlatAppearance.BorderSize = 0;
+                btnEye.Click += (s, e) =>
+                {
+                    if (tb.Text == placeholder)
+                    {
+                        tb.Focus();
+                        return;
+                    }
+
+             isVisible = !isVisible;
+                tb.UseSystemPasswordChar = !isVisible;
+                btnEye.Text = isVisible ? "👁" : "🙈";
+                };
+
+                SetupPlaceholder(tb, placeholder, isPlaceholder =>
+                {
+                    if (isPlaceholder)
+                    {
+                  isVisible = false;
+                    btnEye.Text = "🙈";
+                    }
+                });
+
+                border.Controls.Add(btnEye);
+            }
 
             // Vẽ viền bo góc
             border.Paint += (s, e) =>
@@ -326,14 +373,14 @@ namespace CLOTHES
                 using var pen = new Pen(Color.FromArgb(200, 200, 200), 2);
 
                 var r = new Rectangle(1, 1, border.Width - 2, border.Height - 2);
-                e.Graphics.DrawPath(pen, CreateRoundedRect(r, 12)); // ✅ Giảm radius từ 14
+                e.Graphics.DrawPath(pen, CreateRoundedRect(r, 12));
             };
 
             return row;
         }
 
         // ===== Placeholder =====
-        private void SetupPlaceholder(TextBox tb, string placeholder)
+   private void SetupPlaceholder(TextBox tb, string placeholder, Action<bool>? placeholderStateChanged = null)
         {
             tb.GotFocus += (s, e) =>
             {
@@ -343,6 +390,7 @@ namespace CLOTHES
                     tb.ForeColor = Color.Black;
                     if (placeholder == "Mật khẩu")
                         tb.UseSystemPasswordChar = true;
+               placeholderStateChanged?.Invoke(false);
                 }
             };
 
@@ -354,6 +402,7 @@ namespace CLOTHES
                         tb.UseSystemPasswordChar = false;
                     tb.Text = placeholder;
                     tb.ForeColor = Color.Gray;
+               placeholderStateChanged?.Invoke(true);
                 }
             };
         }

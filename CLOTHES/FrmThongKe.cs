@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using QLBH.BLL;
@@ -14,10 +15,12 @@ public class FrmThongKe : Form
     private DateTimePicker dtFrom = null!;
     private DateTimePicker dtTo = null!;
     private Button btnLoad = null!;
+    private Button btnExport = null!;
 
     private Label lblDoanhThu = null!;
     private Label lblSoDon = null!;
     private Label lblAvg = null!;
+    private Label lblLoiNhuan = null!;
 
     private DataGridView dgvTheoNgay = null!;
     private Panel chartHost = null!;
@@ -81,8 +84,10 @@ public class FrmThongKe : Form
         dtFrom = new DateTimePicker { Width = 150, Format = DateTimePickerFormat.Short };
         dtTo = new DateTimePicker { Width = 150, Format = DateTimePickerFormat.Short };
         btnLoad = new Button { Text = "Xem", Width = 80, Height = 30 };
+        btnExport = new Button { Text = "Xuất Excel", Width = 100, Height = 30 };
 
         btnLoad.Click += (_, __) => SafeCall(LoadData);
+        btnExport.Click += (_, __) => SafeCall(ExportThongKe);
 
         // Avoid reloading while the user is interacting with the calendar drop-down.
         // We debounce reload to prevent UI interruptions that can make the picker feel "not selectable".
@@ -96,20 +101,24 @@ public class FrmThongKe : Form
         filter.Controls.Add(new Label { Text = "Đến ngày", AutoSize = true, Padding = new Padding(0, 8, 0, 0) });
         filter.Controls.Add(dtTo);
         filter.Controls.Add(btnLoad);
+        filter.Controls.Add(btnExport);
 
         // KPIs
-        var kpi = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3 };
-        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
-        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
-        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
+        var kpi = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 4 };
+        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
+        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
+        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
+        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
 
         lblDoanhThu = BuildKpiLabel("Doanh thu", "0");
         lblSoDon = BuildKpiLabel("Số đơn", "0");
         lblAvg = BuildKpiLabel("Trung bình/đơn", "0");
+        lblLoiNhuan = BuildKpiLabel("Lợi nhuận", "0");
 
         kpi.Controls.Add(WrapKpi(lblDoanhThu), 0, 0);
         kpi.Controls.Add(WrapKpi(lblSoDon), 1, 0);
         kpi.Controls.Add(WrapKpi(lblAvg), 2, 0);
+        kpi.Controls.Add(WrapKpi(lblLoiNhuan), 3, 0);
 
         // Grids
         var grids = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 2 };
@@ -203,12 +212,16 @@ public class FrmThongKe : Form
         // Summary
         var dtSum = _service.GetThongKeTongQuan(from, to);
         decimal doanhThu = 0;
+        decimal giaVon = 0;
+        decimal loiNhuan = 0;
         int soDon = 0;
         if (dtSum.Rows.Count > 0)
         {
             var r = dtSum.Rows[0];
             soDon = r["SO_DON"] == DBNull.Value ? 0 : Convert.ToInt32(r["SO_DON"]);
             doanhThu = r["DOANH_THU"] == DBNull.Value ? 0 : Convert.ToDecimal(r["DOANH_THU"]);
+            giaVon = r["GIA_VON"] == DBNull.Value ? 0 : Convert.ToDecimal(r["GIA_VON"]);
+            loiNhuan = r["LOI_NHUAN"] == DBNull.Value ? 0 : Convert.ToDecimal(r["LOI_NHUAN"]);
         }
 
         decimal avg = soDon == 0 ? 0 : doanhThu / soDon;
@@ -216,6 +229,7 @@ public class FrmThongKe : Form
         lblDoanhThu.Text = $"Doanh thu: {doanhThu:N0} VNĐ";
         lblSoDon.Text = $"Số đơn: {soDon:N0}";
         lblAvg.Text = $"Trung bình/đơn: {avg:N0} VNĐ";
+        lblLoiNhuan.Text = $"Lợi nhuận: {loiNhuan:N0} VNĐ";
 
         // By day
         _dtDay = _service.GetThongKeTheoNgay(from, to);
@@ -225,9 +239,13 @@ public class FrmThongKe : Form
             dgvTheoNgay.Columns["NGAY"].HeaderText = "Ngày";
             dgvTheoNgay.Columns["SO_DON"].HeaderText = "Số đơn";
             dgvTheoNgay.Columns["DOANH_THU"].HeaderText = "Doanh thu";
+            dgvTheoNgay.Columns["GIA_VON"].HeaderText = "Giá vốn";
+            dgvTheoNgay.Columns["LOI_NHUAN"].HeaderText = "Lợi nhuận";
 
             dgvTheoNgay.Columns["NGAY"].DefaultCellStyle.Format = "dd/MM/yyyy";
             dgvTheoNgay.Columns["DOANH_THU"].DefaultCellStyle.Format = "N0";
+            dgvTheoNgay.Columns["GIA_VON"].DefaultCellStyle.Format = "N0";
+            dgvTheoNgay.Columns["LOI_NHUAN"].DefaultCellStyle.Format = "N0";
         }
 
         chartHost.Invalidate();
@@ -359,5 +377,65 @@ public class FrmThongKe : Form
 
         _reloadTimer.Stop();
         _reloadTimer.Start();
+    }
+
+    private void ExportThongKe()
+    {
+        var dt = _dtDay;
+        if (dt == null || dt.Rows.Count == 0)
+        {
+            MessageBox.Show("Không có dữ liệu để xuất.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        using var dialog = new SaveFileDialog
+        {
+            Filter = "Excel (*.csv)|*.csv",
+            FileName = $"ThongKe_{dtFrom.Value:yyyyMMdd}_{dtTo.Value:yyyyMMdd}.csv",
+            Title = "Xuất thống kê"
+        };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+            return;
+
+        using var writer = new StreamWriter(dialog.FileName, false, new System.Text.UTF8Encoding(true));
+
+        var headers = dgvTheoNgay.Columns
+            .Cast<DataGridViewColumn>()
+            .Select(c => EscapeCsv(c.HeaderText))
+            .ToArray();
+        writer.WriteLine(string.Join(",", headers));
+
+        foreach (DataRow row in dt.Rows)
+        {
+            var values = dgvTheoNgay.Columns
+                .Cast<DataGridViewColumn>()
+                .Select(c =>
+                {
+                    var key = string.IsNullOrWhiteSpace(c.DataPropertyName) ? c.Name : c.DataPropertyName;
+                    return EscapeCsv(dt.Columns.Contains(key) ? row[key] : null);
+                })
+                .ToArray();
+            writer.WriteLine(string.Join(",", values));
+        }
+
+        MessageBox.Show("Đã xuất thống kê.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    private static string EscapeCsv(object? value)
+    {
+        if (value == null || value == DBNull.Value)
+            return "";
+
+        var text = value switch
+        {
+            DateTime dt => dt.ToString("dd/MM/yyyy"),
+            _ => Convert.ToString(value)
+        } ?? string.Empty;
+
+        text = text.Replace("\r", " ").Replace("\n", " ");
+        return text.Contains(',') || text.Contains('"')
+            ? $"\"{text.Replace("\"", "\"\"")}\""
+            : text;
     }
 }

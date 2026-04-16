@@ -39,7 +39,8 @@ public partial class FrmNguoiDung : Form
 	private void LoadUsers()
 	{
 		_table = _service.GetAll();
-      gridUsers.DataSource = _table;
+        NormalizeRoles(_table);
+		gridUsers.DataSource = _table;
 
 		if (gridUsers.Columns.Contains("PASS"))
 			gridUsers.Columns["PASS"].Visible = false;
@@ -52,6 +53,8 @@ public partial class FrmNguoiDung : Form
 
 		gridUsers.CurrentCellDirtyStateChanged -= GridUsers_CurrentCellDirtyStateChanged;
 		gridUsers.CurrentCellDirtyStateChanged += GridUsers_CurrentCellDirtyStateChanged;
+		gridUsers.DataError -= GridUsers_DataError;
+		gridUsers.DataError += GridUsers_DataError;
 
 		if (gridUsers.Columns.Contains("TRANGTHAI"))
 			gridUsers.Columns["TRANGTHAI"].HeaderText = "Hoạt động";
@@ -66,10 +69,28 @@ public partial class FrmNguoiDung : Form
 		EnsureRoleComboColumn();
 	}
 
+	private static void NormalizeRoles(DataTable? table)
+	{
+		if (table == null || !table.Columns.Contains("VAITRO"))
+			return;
+
+		foreach (DataRow row in table.Rows)
+		{
+			var role = row["VAITRO"] == DBNull.Value ? string.Empty : row["VAITRO"].ToString();
+			role = string.IsNullOrWhiteSpace(role) ? "NHANVIEN" : role.Trim().ToUpperInvariant();
+			row["VAITRO"] = role;
+		}
+	}
+
 	private void GridUsers_CurrentCellDirtyStateChanged(object? sender, EventArgs e)
 	{
 		if (gridUsers.IsCurrentCellDirty)
 			gridUsers.CommitEdit(DataGridViewDataErrorContexts.Commit);
+	}
+
+	private void GridUsers_DataError(object? sender, DataGridViewDataErrorEventArgs e)
+	{
+		e.ThrowException = false;
 	}
 
 	private void EnsureRoleComboColumn()
@@ -91,7 +112,19 @@ public partial class FrmNguoiDung : Form
 			FlatStyle = FlatStyle.Flat,
 			DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
 		};
-		col.Items.AddRange("ADMIN", "NHANVIEN");
+        col.Items.AddRange("ADMIN", "NHANVIEN");
+		if (_table != null && _table.Columns.Contains("VAITRO"))
+		{
+			foreach (var role in _table.AsEnumerable()
+				.Select(r => r["VAITRO"] == DBNull.Value ? string.Empty : r["VAITRO"].ToString())
+				.Where(r => !string.IsNullOrWhiteSpace(r))
+				.Select(r => r!.Trim().ToUpperInvariant())
+				.Distinct())
+			{
+				if (!col.Items.Contains(role))
+					col.Items.Add(role);
+			}
+		}
 
 		gridUsers.Columns.Insert(roleIndex, col);
 	}

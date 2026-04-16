@@ -129,14 +129,37 @@ WHERE ct.SOHD = @sohd";
     public DataTable GetThongKeTongQuan(DateTime? from, DateTime? to)
     {
         const string sql = @"
+WITH HoaDonFiltered AS (
+    SELECT hd.SOHD, hd.TONGTIEN2
+    FROM HOADON hd
+    WHERE
+        hd.TRANGTHAI = N'DATHANHTOAN'
+        AND (@from IS NULL OR hd.NGHD >= @from)
+        AND (@to IS NULL OR hd.NGHD < DATEADD(day, 1, @to))
+),
+TongHop AS (
+    SELECT
+        (SELECT COUNT(*) FROM HoaDonFiltered) AS SO_DON,
+        (SELECT ISNULL(SUM(TONGTIEN2), 0) FROM HoaDonFiltered) AS DOANH_THU,
+        (
+            SELECT ISNULL(SUM(ct.SL * ISNULL(pn.GIA_NHAP, 0)), 0)
+            FROM CTHD ct
+            JOIN HoaDonFiltered hd ON hd.SOHD = ct.SOHD
+            OUTER APPLY (
+                SELECT TOP 1 ctpn.DONGIA_NHAP AS GIA_NHAP
+                FROM CTPN ctpn
+                JOIN PHIEUNHAP pn ON pn.MAPN = ctpn.MAPN
+                WHERE ctpn.MACT = ct.MACT
+                ORDER BY pn.NGAYNHAP DESC, pn.MAPN DESC
+            ) pn
+        ) AS GIA_VON
+)
 SELECT
-    COUNT(*) AS SO_DON,
-    ISNULL(SUM(hd.TONGTIEN2), 0) AS DOANH_THU
-FROM HOADON hd
-WHERE
-    hd.TRANGTHAI = N'DATHANHTOAN'
-    AND (@from IS NULL OR hd.NGHD >= @from)
-    AND (@to IS NULL OR hd.NGHD < DATEADD(day, 1, @to))";
+    SO_DON,
+    DOANH_THU,
+    GIA_VON,
+    (DOANH_THU - GIA_VON) AS LOI_NHUAN
+FROM TongHop";
 
         return Db.Query(
             sql,
@@ -147,17 +170,43 @@ WHERE
     public DataTable GetThongKeTheoNgay(DateTime? from, DateTime? to)
     {
         const string sql = @"
+WITH HoaDonFiltered AS (
+    SELECT hd.SOHD, CAST(hd.NGHD AS date) AS NGAY, hd.TONGTIEN2
+    FROM HOADON hd
+    WHERE
+        hd.TRANGTHAI = N'DATHANHTOAN'
+        AND (@from IS NULL OR hd.NGHD >= @from)
+        AND (@to IS NULL OR hd.NGHD < DATEADD(day, 1, @to))
+),
+DoanhThuByDay AS (
+    SELECT NGAY, COUNT(*) AS SO_DON, ISNULL(SUM(TONGTIEN2), 0) AS DOANH_THU
+    FROM HoaDonFiltered
+    GROUP BY NGAY
+),
+GiaVonByDay AS (
+    SELECT
+        h.NGAY,
+        ISNULL(SUM(ct.SL * ISNULL(pn.GIA_NHAP, 0)), 0) AS GIA_VON
+    FROM HoaDonFiltered h
+    JOIN CTHD ct ON h.SOHD = ct.SOHD
+    OUTER APPLY (
+        SELECT TOP 1 ctpn.DONGIA_NHAP AS GIA_NHAP
+        FROM CTPN ctpn
+        JOIN PHIEUNHAP pn ON pn.MAPN = ctpn.MAPN
+        WHERE ctpn.MACT = ct.MACT
+        ORDER BY pn.NGAYNHAP DESC, pn.MAPN DESC
+    ) pn
+    GROUP BY h.NGAY
+)
 SELECT
-    CAST(hd.NGHD AS date) AS NGAY,
-    COUNT(*) AS SO_DON,
-    ISNULL(SUM(hd.TONGTIEN2), 0) AS DOANH_THU
-FROM HOADON hd
-WHERE
-    hd.TRANGTHAI = N'DATHANHTOAN'
-    AND (@from IS NULL OR hd.NGHD >= @from)
-    AND (@to IS NULL OR hd.NGHD < DATEADD(day, 1, @to))
-GROUP BY CAST(hd.NGHD AS date)
-ORDER BY NGAY";
+    d.NGAY,
+    d.SO_DON,
+    d.DOANH_THU,
+    ISNULL(g.GIA_VON, 0) AS GIA_VON,
+    (d.DOANH_THU - ISNULL(g.GIA_VON, 0)) AS LOI_NHUAN
+FROM DoanhThuByDay d
+LEFT JOIN GiaVonByDay g ON d.NGAY = g.NGAY
+ORDER BY d.NGAY";
 
         return Db.Query(
             sql,
