@@ -36,6 +36,8 @@ public class FrmBanHang : Form
     private Label lblTong = null!;
     private Label lblGiam = null!;
     private Label lblThanhToan = null!;
+    private NumericUpDown numDiem = null!;
+    private Label lblDiem = null!;
     private Button btnPay = null!;
     private Button btnRemove = null!;
 
@@ -69,7 +71,7 @@ public class FrmBanHang : Form
         // LEFT: header + barcode + search
         var left = new Panel { Dock = DockStyle.Fill, BackColor = Color.White, Padding = new Padding(12) };
         var leftLayout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 5 };
-        leftLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 170));
+        leftLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 280));
         leftLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
         leftLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
         leftLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
@@ -149,6 +151,9 @@ public class FrmBanHang : Form
         dgvCart.Columns.Add(new DataGridViewTextBoxColumn { Name = "DONGIA", HeaderText = "Đơn giá" });
         dgvCart.Columns.Add(new DataGridViewTextBoxColumn { Name = "THANHTIEN", HeaderText = "Thành tiền", ReadOnly = true });
 
+        dgvCart.Columns["DONGIA"].DefaultCellStyle.Format = "N0";
+        dgvCart.Columns["THANHTIEN"].DefaultCellStyle.Format = "N0";
+
         dgvCart.CellEndEdit += (_, e) =>
         {
             if (e.ColumnIndex < 0 || e.RowIndex < 0) return;
@@ -217,10 +222,11 @@ public class FrmBanHang : Form
 
     private Control BuildHeader()
     {
-        var header = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
+        var header = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 8 };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
+        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         header.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         header.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         header.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
@@ -236,6 +242,8 @@ public class FrmBanHang : Form
         txtMaKm = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "Nhập mã KM rồi Enter (vd: KM10)..." };
         dtNgay = new DateTimePicker { Dock = DockStyle.Fill, Format = DateTimePickerFormat.Custom, CustomFormat = "dd/MM/yyyy HH:mm" };
         txtGhiChu = new TextBox { Dock = DockStyle.Fill, Multiline = true, Height = 40 };
+        numDiem = new NumericUpDown { Dock = DockStyle.Fill, Maximum = 1000000, DecimalPlaces = 0, ThousandsSeparator = true };
+        lblDiem = new Label { Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, ForeColor = Color.FromArgb(107, 114, 128) };
 
         header.Controls.Add(new Label { Text = "Nhân viên", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
         header.Controls.Add(cboNhanVien, 1, 0);
@@ -252,11 +260,19 @@ public class FrmBanHang : Form
         header.Controls.Add(new Label { Text = "Mã KM", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 4);
         header.Controls.Add(txtMaKm, 1, 4);
 
-        header.Controls.Add(new Label { Text = "Ngày", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 5);
-        header.Controls.Add(dtNgay, 1, 5);
+        header.Controls.Add(new Label { Text = "Đổi điểm", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 5);
+        var diemRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
+        diemRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
+        diemRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        diemRow.Controls.Add(numDiem, 0, 0);
+        diemRow.Controls.Add(lblDiem, 1, 0);
+        header.Controls.Add(diemRow, 1, 5);
 
-        header.Controls.Add(new Label { Text = "Ghi chú", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 6);
-        header.Controls.Add(txtGhiChu, 1, 6);
+        header.Controls.Add(new Label { Text = "Ngày", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 6);
+        header.Controls.Add(dtNgay, 1, 6);
+
+        header.Controls.Add(new Label { Text = "Ghi chú", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 7);
+        header.Controls.Add(txtGhiChu, 1, 7);
 
         return header;
     }
@@ -277,10 +293,21 @@ public class FrmBanHang : Form
 
         // Khách hàng: cho chọn "khách lẻ" (null)
         var dtKh = _khService.GetAll();
-        var view = dtKh.DefaultView;
+        if (!dtKh.Columns.Contains("MAKH"))
+            dtKh.Columns.Add("MAKH", typeof(string));
+        if (!dtKh.Columns.Contains("HOTEN"))
+            dtKh.Columns.Add("HOTEN", typeof(string));
+
+        var none = dtKh.NewRow();
+        none["MAKH"] = DBNull.Value;
+        none["HOTEN"] = "(Khách lẻ)";
+        if (dtKh.Columns.Contains("DIEM"))
+            none["DIEM"] = 0;
+        dtKh.Rows.InsertAt(none, 0);
+
         cboKhachHang.DisplayMember = "HOTEN";
         cboKhachHang.ValueMember = "MAKH";
-        cboKhachHang.DataSource = view;
+        cboKhachHang.DataSource = dtKh;
         if (cboKhachHang.Items.Count > 0) cboKhachHang.SelectedIndex = 0;
 
         cboHinhThuc.Items.Clear();
@@ -289,6 +316,12 @@ public class FrmBanHang : Form
 
         LoadKhuyenMai();
         cboKhuyenMai.SelectedIndexChanged += (_, __) => RecalcTong();
+        numDiem.ValueChanged += (_, __) => RecalcTong();
+        cboKhachHang.SelectedIndexChanged += (_, __) =>
+        {
+            RefreshDiemHint();
+            RecalcTong();
+        };
         txtMaKm.KeyDown += (_, e) =>
         {
             if (e.KeyCode != Keys.Enter) return;
@@ -357,6 +390,8 @@ public class FrmBanHang : Form
         cboKhuyenMai.ValueMember = "MAKM";
         cboKhuyenMai.DataSource = t;
         if (cboKhuyenMai.Items.Count > 0) cboKhuyenMai.SelectedIndex = 0;
+
+        RefreshDiemHint();
     }
 
     private void RefreshSearch()
@@ -426,6 +461,8 @@ public class FrmBanHang : Form
         if (dgvSearch.Columns.Contains("TONKHO")) dgvSearch.Columns["TONKHO"].HeaderText = "Tồn";
         if (dgvSearch.Columns.Contains("GIABAN")) dgvSearch.Columns["GIABAN"].HeaderText = "Giá bán";
         if (dgvSearch.Columns.Contains("BARCODE")) dgvSearch.Columns["BARCODE"].HeaderText = "Barcode";
+
+        if (dgvSearch.Columns.Contains("GIABAN")) dgvSearch.Columns["GIABAN"].DefaultCellStyle.Format = "N0";
     }
 
     private void AddByBarcode()
@@ -555,7 +592,22 @@ public class FrmBanHang : Form
         if (_kmPercent < 0) _kmPercent = 0;
         if (_kmPercent > 100) _kmPercent = 100;
 
-        decimal giam = Math.Round(total * _kmPercent / 100m, 0);
+        decimal giamKm = Math.Round(total * _kmPercent / 100m, 0);
+        if (giamKm < 0) giamKm = 0;
+        if (giamKm > total) giamKm = total;
+
+        var diemHienCo = GetSelectedKhachDiem();
+        int diemNhap = (int)numDiem.Value;
+        int diemSuDung = Math.Min(diemNhap, diemHienCo);
+        decimal giamDiem = diemSuDung * 1000m;
+        var maxDiemDiscount = Math.Round(total * 0.2m, 0);
+        if (giamDiem > maxDiemDiscount)
+        {
+            giamDiem = maxDiemDiscount;
+            diemSuDung = (int)Math.Floor(giamDiem / 1000m);
+        }
+
+        decimal giam = giamKm + giamDiem;
         if (giam < 0) giam = 0;
         if (giam > total) giam = total;
         decimal thanhToan = total - giam;
@@ -564,6 +616,25 @@ public class FrmBanHang : Form
         lblGiam.Text = $"Giảm: {giam:N0} VNĐ";
         lblThanhToan.Text = $"Thanh toán: {thanhToan:N0} VNĐ";
         // Pay button is anchored to the right.
+    }
+
+    private int GetSelectedKhachDiem()
+    {
+        if (cboKhachHang.SelectedItem is DataRowView rv && rv.Row.Table.Columns.Contains("DIEM"))
+            return rv["DIEM"] == DBNull.Value ? 0 : Convert.ToInt32(rv["DIEM"]);
+        return 0;
+    }
+
+    private void RefreshDiemHint()
+    {
+        int diem = GetSelectedKhachDiem();
+        lblDiem.Text = $"Hiện có: {diem:N0} điểm (1 điểm = 1.000đ)";
+        numDiem.Maximum = diem;
+        if (numDiem.Value > diem)
+            numDiem.Value = diem;
+        if (diem <= 0)
+            numDiem.Value = 0;
+        numDiem.Enabled = diem > 0;
     }
 
     private static int TryInt(object? v, int def)
@@ -596,7 +667,8 @@ public class FrmBanHang : Form
         }
 
         var maKm = cboKhuyenMai?.SelectedValue?.ToString();
-        var (ok, msg, soHd) = _service.ThanhToan(maNd, maKh, dtNgay.Value, maKm, txtGhiChu.Text, ht, items);
+        var diemDoi = (int)numDiem.Value;
+        var (ok, msg, soHd) = _service.ThanhToan(maNd, maKh, dtNgay.Value, maKm, txtGhiChu.Text, ht, diemDoi, items);
         MessageBox.Show(msg, ok ? "Thành công" : "Lỗi", MessageBoxButtons.OK,
             ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
 

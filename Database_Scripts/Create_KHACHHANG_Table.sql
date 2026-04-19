@@ -25,7 +25,8 @@ CREATE TABLE KHACHHANG (
     GIOITINH nvarchar(10) NULL,
     DCHI nvarchar(200) NULL,
     SDT varchar(20) NOT NULL,
-    EMAIL varchar(100) NULL
+    EMAIL varchar(100) NULL,
+    DIEM int NOT NULL DEFAULT(0)
 );
 
 CREATE TABLE NGUOIDUNG (

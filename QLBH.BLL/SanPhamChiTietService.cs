@@ -58,15 +58,11 @@ public class SanPhamChiTietService
             return (false, "Màu không được để trống.");
         if (ct.GiaBan < 0)
             return (false, "Giá bán không hợp lệ.");
-        if (ct.TonKho < 0)
-            return (false, "Tồn kho không hợp lệ.");
-
         return _dal.Update(
             ct.MaCT.Trim(),
             ct.Size.Trim(),
             ct.Mau.Trim(),
             ct.GiaBan,
-            ct.TonKho,
             ct.BarCode,
             ct.TrangThai
         );

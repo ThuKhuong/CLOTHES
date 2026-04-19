@@ -49,6 +49,7 @@ namespace QLBH.BLL
 
                 // Generate new customer ID
                 khachHang.MaKH = GenerateNewId();
+                if (khachHang.Diem < 0) khachHang.Diem = 0;
 
                 // Check if phone already exists
                 if (_dal.CheckPhoneExists(khachHang.SDT))
@@ -75,6 +76,9 @@ namespace QLBH.BLL
                 if (!validationResult.isValid)
                     return (false, validationResult.message);
 
+                if (khachHang.Diem < 0)
+                    khachHang.Diem = 0;
+
                 // Check if customer exists
                 if (!_dal.CheckExists(khachHang.MaKH))
                     return (false, "Khách hàng không tồn tại.");
@@ -93,6 +97,23 @@ namespace QLBH.BLL
             {
                 return (false, $"Lỗi khi cập nhật khách hàng: {ex.Message}");
             }
+        }
+
+        public int GetDiem(string maKh)
+        {
+            if (string.IsNullOrWhiteSpace(maKh))
+                return 0;
+            return _dal.GetDiem(maKh.Trim());
+        }
+
+        public (bool success, string message) UpdateDiem(string maKh, int diem)
+        {
+            if (string.IsNullOrWhiteSpace(maKh))
+                return (false, "Mã khách hàng không hợp lệ.");
+            if (diem < 0) diem = 0;
+
+            var rows = _dal.UpdateDiem(maKh.Trim(), diem);
+            return rows > 0 ? (true, "Cập nhật điểm thành công!") : (false, "Không thể cập nhật điểm.");
         }
 
         public (bool success, string message) Delete(string maKH)

@@ -67,13 +67,15 @@ namespace CLOTHES
 
                     dgvData.DefaultCellStyle.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
                     dgvData.DefaultCellStyle.ForeColor = Color.FromArgb(51, 65, 85);
-                    dgvData.DefaultCellStyle.SelectionBackColor = Color.FromArgb(79, 70, 229);
-                    dgvData.DefaultCellStyle.SelectionForeColor = Color.White;
+                    dgvData.DefaultCellStyle.SelectionBackColor = Color.FromArgb(226, 232, 240);
+                    dgvData.DefaultCellStyle.SelectionForeColor = Color.FromArgb(51, 65, 85);
                     dgvData.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(249, 250, 251);
 
                     dgvData.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
                     dgvData.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
                     dgvData.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(79, 70, 229);
+                    dgvData.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(79, 70, 229);
+                    dgvData.ColumnHeadersDefaultCellStyle.SelectionForeColor = Color.White;
                     dgvData.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                     dgvData.EnableHeadersVisualStyles = false;
                 }

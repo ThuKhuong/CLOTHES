@@ -133,14 +133,28 @@ WHERE MASP=@masp";
 
     public (bool success, string message) Delete(string maSp)
     {
-        const string sql1 = "DELETE FROM SANPHAM_CHITIET WHERE MASP=@masp";
-        const string sql2 = "DELETE FROM SANPHAM WHERE MASP=@masp";
+        try
+        {
+            const string sql1 = "DELETE FROM SANPHAM_CHITIET WHERE MASP=@masp";
+            const string sql2 = "DELETE FROM SANPHAM WHERE MASP=@masp";
 
-        var p = new[] { P("@masp", maSp) };
+            var p = new[] { P("@masp", maSp) };
 
-        Db.Execute(sql1, p);
-        return Db.Execute(sql2, p) > 0
-            ? (true, "Xóa sản phẩm thành công")
-            : (false, "Không thể xóa sản phẩm");
+            Db.Execute(sql1, p);
+            return Db.Execute(sql2, p) > 0
+                ? (true, "Xóa sản phẩm thành công")
+                : (false, "Không thể xóa sản phẩm");
+        }
+        catch (SqlException ex)
+        {
+            if (ex.Number == 547)
+                return (false, "Không thể xóa sản phẩm vì đã phát sinh dữ liệu liên quan (đơn hàng/chi tiết sản phẩm).");
+
+            return (false, $"Lỗi dữ liệu: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Lỗi hệ thống: {ex.Message}");
+        }
     }
 }

@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using Microsoft.Data.SqlClient;
 
 namespace QLBH.DAL;
@@ -48,15 +48,15 @@ VALUES (@mact, @masp, @size, @mau, @gia, @ton, @barcode, @tt)";
         };
 
         return Db.Execute(sql, p) > 0
-            ? (true, "Th�m bi?n th? th�nh c�ng")
-            : (false, "Kh�ng th? th�m bi?n th?");
+            ? (true, "Thêm biến thể thành công")
+            : (false, "Không thể thêm biến thể");
     }
 
-    public (bool success, string message) Update(string maCt, string size, string mau, decimal giaBan, int tonKho, string? barCode, bool trangThai)
+    public (bool success, string message) Update(string maCt, string size, string mau, decimal giaBan, string? barCode, bool trangThai)
     {
         const string sql = @"
 UPDATE SANPHAM_CHITIET
-SET SIZE=@size, MAU=@mau, GIABAN=@gia, TONKHO=@ton, BARCODE=@barcode, TRANGTHAI=@tt
+ SET SIZE=@size, MAU=@mau, GIABAN=@gia, BARCODE=@barcode, TRANGTHAI=@tt
 WHERE MACT=@mact";
 
         var p = new[]
@@ -65,22 +65,21 @@ WHERE MACT=@mact";
             P("@size", size),
             P("@mau", mau),
             P("@gia", giaBan),
-            P("@ton", tonKho),
             P("@barcode", barCode),
             P("@tt", trangThai)
         };
 
         return Db.Execute(sql, p) > 0
-            ? (true, "C?p nh?t bi?n th? th�nh c�ng")
-            : (false, "Kh�ng th? c?p nh?t bi?n th?");
+            ? (true, "Cập nhật biến thể thành công")
+            : (false, "Không thể cập nhật biến thể");
     }
 
     public (bool success, string message) Delete(string maCt)
     {
         const string sql = "DELETE FROM SANPHAM_CHITIET WHERE MACT=@mact";
         return Db.Execute(sql, new[] { P("@mact", maCt) }) > 0
-            ? (true, "X�a bi?n th? th�nh c�ng")
-            : (false, "Kh�ng th? x�a bi?n th?");
+            ? (true, "Xóa biến thể thành công")
+            : (false, "Không thể xóa biến thể");
     }
 
     public string GetNextMaCt()

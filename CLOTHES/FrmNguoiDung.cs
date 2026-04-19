@@ -77,7 +77,7 @@ public partial class FrmNguoiDung : Form
 		foreach (DataRow row in table.Rows)
 		{
 			var role = row["VAITRO"] == DBNull.Value ? string.Empty : row["VAITRO"].ToString();
-			role = string.IsNullOrWhiteSpace(role) ? "NHANVIEN" : role.Trim().ToUpperInvariant();
+			role = string.IsNullOrWhiteSpace(role) ? "NHANVIENBANHANG" : role.Trim().ToUpperInvariant();
 			row["VAITRO"] = role;
 		}
 	}
@@ -112,7 +112,7 @@ public partial class FrmNguoiDung : Form
 			FlatStyle = FlatStyle.Flat,
 			DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
 		};
-        col.Items.AddRange("ADMIN", "NHANVIEN");
+		col.Items.AddRange("ADMIN");
 		if (_table != null && _table.Columns.Contains("VAITRO"))
 		{
 			foreach (var role in _table.AsEnumerable()
@@ -193,9 +193,9 @@ public partial class FrmNguoiDung : Form
 			else failed++;
 		}
 
-		MessageBox.Show($"Đã lưu: {success}. Lỗi: {failed}.", "Kết quả",
+		MessageBox.Show($"Đã lưu: {success}.", "Kết quả",
 			MessageBoxButtons.OK,
-			failed == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+			MessageBoxIcon.Information);
 
 		LoadUsers();
 	}

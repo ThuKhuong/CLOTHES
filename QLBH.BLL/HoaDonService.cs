@@ -37,6 +37,7 @@ public class HoaDonService
         string? maKm,
         string? ghiChu,
         string? hinhThucTt,
+        int diemDoi,
         List<(string maCt, int sl, decimal donGia)> items)
     {
         if (string.IsNullOrWhiteSpace(maNd))
@@ -61,6 +62,7 @@ public class HoaDonService
             string.IsNullOrWhiteSpace(maKm) ? null : maKm.Trim(),
             string.IsNullOrWhiteSpace(ghiChu) ? null : ghiChu.Trim(),
             string.IsNullOrWhiteSpace(hinhThucTt) ? null : hinhThucTt.Trim(),
+            diemDoi,
             items);
     }
 }

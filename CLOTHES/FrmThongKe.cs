@@ -104,21 +104,18 @@ public class FrmThongKe : Form
         filter.Controls.Add(btnExport);
 
         // KPIs
-        var kpi = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 4 };
-        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
-        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
-        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
-        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
+        var kpi = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3 };
+        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
+        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
+        kpi.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
 
         lblDoanhThu = BuildKpiLabel("Doanh thu", "0");
         lblSoDon = BuildKpiLabel("Số đơn", "0");
-        lblAvg = BuildKpiLabel("Trung bình/đơn", "0");
         lblLoiNhuan = BuildKpiLabel("Lợi nhuận", "0");
 
         kpi.Controls.Add(WrapKpi(lblDoanhThu), 0, 0);
         kpi.Controls.Add(WrapKpi(lblSoDon), 1, 0);
-        kpi.Controls.Add(WrapKpi(lblAvg), 2, 0);
-        kpi.Controls.Add(WrapKpi(lblLoiNhuan), 3, 0);
+        kpi.Controls.Add(WrapKpi(lblLoiNhuan), 2, 0);
 
         // Grids
         var grids = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 2 };
@@ -224,11 +221,8 @@ public class FrmThongKe : Form
             loiNhuan = r["LOI_NHUAN"] == DBNull.Value ? 0 : Convert.ToDecimal(r["LOI_NHUAN"]);
         }
 
-        decimal avg = soDon == 0 ? 0 : doanhThu / soDon;
-
         lblDoanhThu.Text = $"Doanh thu: {doanhThu:N0} VNĐ";
         lblSoDon.Text = $"Số đơn: {soDon:N0}";
-        lblAvg.Text = $"Trung bình/đơn: {avg:N0} VNĐ";
         lblLoiNhuan.Text = $"Lợi nhuận: {loiNhuan:N0} VNĐ";
 
         // By day

@@ -129,16 +129,16 @@
             groupBox1.Size = new Size(728, 624);
             groupBox1.TabIndex = 0;
             groupBox1.TabStop = false;
-            groupBox1.Text = "📋 Danh sách loại sản phẩm";
+            groupBox1.Text = "Danh sách loại sản phẩm";
             // 
             // txtTimKiem
             // 
             txtTimKiem.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             txtTimKiem.Font = new Font("Segoe UI", 11F);
-            txtTimKiem.Location = new Point(110, 36);
+            txtTimKiem.Location = new Point(18, 36);
             txtTimKiem.Name = "txtTimKiem";
             txtTimKiem.PlaceholderText = "Nhập từ khóa tìm kiếm...";
-            txtTimKiem.Size = new Size(602, 32);
+            txtTimKiem.Size = new Size(694, 32);
             txtTimKiem.TabIndex = 2;
             txtTimKiem.TextChanged += txtTimKiem_TextChanged;
             // 
@@ -151,7 +151,8 @@
             label1.Name = "label1";
             label1.Size = new Size(86, 25);
             label1.TabIndex = 1;
-            label1.Text = "🔎 Tìm kiếm:";
+            label1.Text = "Tìm kiếm:";
+            label1.Visible = false;
             // 
             // dgvData
             // 
@@ -194,7 +195,7 @@
             groupBox2.Size = new Size(402, 624);
             groupBox2.TabIndex = 0;
             groupBox2.TabStop = false;
-            groupBox2.Text = "🧾 Thông tin loại sản phẩm";
+            groupBox2.Text = "Thông tin loại sản phẩm";
             // 
             // btnHuy
             // 
@@ -224,7 +225,7 @@
             btnLuu.Name = "btnLuu";
             btnLuu.Size = new Size(94, 40);
             btnLuu.TabIndex = 4;
-            btnLuu.Text = "💾 Lưu";
+            btnLuu.Text = "Lưu";
             btnLuu.UseVisualStyleBackColor = false;
             btnLuu.Click += btnLuu_Click;
             // 

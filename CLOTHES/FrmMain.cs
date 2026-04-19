@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using QLBH.BLL;
 using QLBH.DTO;
 
 namespace CLOTHES
@@ -13,6 +15,8 @@ namespace CLOTHES
         private Panel contentPanel;
         private Panel userInfoPanel;
         private Button selectedButton;
+        private Image? _avatarImage;
+        private readonly HoaDonService _hoaDonService = new();
 
         private const bool ShowExperimentalMenuItems = false;
 
@@ -69,7 +73,7 @@ namespace CLOTHES
             {
                 Width = 300,
                 Dock = DockStyle.Left,
-                BackColor = Color.FromArgb(88, 86, 214),
+                BackColor = Color.FromArgb(245, 245, 245),
                 Padding = new Padding(0),
                 Font = new Font("Segoe UI", 9F, FontStyle.Regular)
             };
@@ -142,22 +146,31 @@ namespace CLOTHES
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias; // Improve text rendering
-                using (var brush = new SolidBrush(Color.FromArgb(255, 107, 107)))
+                using var brush = new SolidBrush(Color.FromArgb(255, 107, 107));
+                e.Graphics.FillEllipse(brush, 0, 0, 49, 49);
+
+                if (_avatarImage != null)
                 {
-                    e.Graphics.FillEllipse(brush, 0, 0, 49, 49);
+                    using var path = new GraphicsPath();
+                    path.AddEllipse(0, 0, 49, 49);
+                    var oldClip = e.Graphics.Clip;
+                    e.Graphics.SetClip(path);
+                    e.Graphics.DrawImage(_avatarImage, new Rectangle(0, 0, 49, 49));
+                    e.Graphics.Clip = oldClip;
                 }
-                
-                // Draw user initials
-                string initials = GetUserInitials(_currentUser.TenND);
-                using (var font = new Font("Segoe UI", 16, FontStyle.Bold))
-                using (var brush = new SolidBrush(Color.White))
+                else
                 {
+                    // Draw user initials
+                    string initials = GetUserInitials(_currentUser.TenND);
+                    using var font = new Font("Segoe UI", 16, FontStyle.Bold);
+                    using var textBrush = new SolidBrush(Color.White);
                     var size = e.Graphics.MeasureString(initials, font);
                     var x = (50 - size.Width) / 2;
                     var y = (50 - size.Height) / 2;
-                    e.Graphics.DrawString(initials, font, brush, x, y);
+                    e.Graphics.DrawString(initials, font, textBrush, x, y);
                 }
             };
+            userCircle.Click += (_, __) => UploadAvatar(userCircle);
 
             var userNameLabel = new Label
             {
@@ -179,6 +192,22 @@ namespace CLOTHES
 
             userInfoPanel.Controls.AddRange(new Control[] { userCircle, userNameLabel, userRoleLabel });
             parent.Controls.Add(userInfoPanel);
+        }
+
+        private void UploadAvatar(Control target)
+        {
+            using var dialog = new OpenFileDialog
+            {
+                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp",
+                Title = "Chọn ảnh đại diện"
+            };
+
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                _avatarImage?.Dispose();
+                _avatarImage = Image.FromFile(dialog.FileName);
+                target.Invalidate();
+            }
         }
 
         private void CreateNavigationButtons(Control parent)
@@ -380,7 +409,7 @@ namespace CLOTHES
                 Font = new Font("Segoe UI", 28, FontStyle.Bold),
                 ForeColor = Color.FromArgb(51, 65, 85),
                 AutoSize = true,
-                Location = new Point(30, 30),
+                Location = new Point(30, 20),
                 UseCompatibleTextRendering = false
             };
 
@@ -390,11 +419,53 @@ namespace CLOTHES
                 Color.FromArgb(139, 92, 246),
                 "👋"
             );
-            welcomeCard.Location = new Point(30, 100);
+            welcomeCard.Location = new Point(30, 80);
             welcomeCard.Size = new Size(500, 120);
 
-            dashboardPanel.Controls.AddRange(new Control[] { titleLabel, welcomeCard });
+            var (doanhThu, soDon) = GetDashboardSummary();
+
+            var kpiRevenue = CreateDashboardCard("Doanh thu", $"{doanhThu:N0} VNĐ", Color.FromArgb(16, 185, 129), "💰");
+            var kpiOrders = CreateDashboardCard("Số đơn", $"{soDon:N0}", Color.FromArgb(59, 130, 246), "🧾");
+
+            var kpiRow = new FlowLayoutPanel
+            {
+                Location = new Point(30, 220),
+                Size = new Size(1100, 130),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoScroll = false,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+
+            kpiRevenue.Size = new Size(320, 100);
+            kpiOrders.Size = new Size(320, 100);
+
+            kpiRevenue.Margin = new Padding(0, 0, 16, 0);
+            kpiOrders.Margin = new Padding(0, 0, 16, 0);
+
+            kpiRow.Controls.Add(kpiRevenue);
+            kpiRow.Controls.Add(kpiOrders);
+
+
+            dashboardPanel.Controls.AddRange(new Control[] { titleLabel, welcomeCard, kpiRow });
             panelMain.Controls.Add(dashboardPanel);
+        }
+
+        private (decimal doanhThu, int soDon) GetDashboardSummary()
+        {
+            var today = DateTime.Today;
+            var sum = _hoaDonService.GetThongKeTongQuan(today, today);
+            decimal doanhThu = 0;
+            int soDon = 0;
+            if (sum.Rows.Count > 0)
+            {
+                var r = sum.Rows[0];
+                soDon = r["SO_DON"] == DBNull.Value ? 0 : Convert.ToInt32(r["SO_DON"]);
+                doanhThu = r["DOANH_THU"] == DBNull.Value ? 0 : Convert.ToDecimal(r["DOANH_THU"]);
+            }
+
+            return (doanhThu, soDon);
         }
 
         private Panel CreateDashboardCard(string title, string subtitle, Color backgroundColor, string icon)
@@ -422,8 +493,8 @@ namespace CLOTHES
                 Font = new Font("Segoe UI Emoji", 24, FontStyle.Regular),
                 ForeColor = Color.White,
                 AutoSize = true,
-                Location = new Point(20, 15),
-                UseCompatibleTextRendering = false
+                UseCompatibleTextRendering = false,
+                Margin = new Padding(0, 5, 12, 0)
             };
 
             var titleLabel = new Label
@@ -432,7 +503,6 @@ namespace CLOTHES
                 Font = new Font("Segoe UI", 16, FontStyle.Bold),
                 ForeColor = Color.White,
                 AutoSize = true,
-                Location = new Point(70, 15),
                 UseCompatibleTextRendering = false
             };
 
@@ -442,12 +512,36 @@ namespace CLOTHES
                 Font = new Font("Segoe UI", 10, FontStyle.Regular),
                 ForeColor = Color.FromArgb(200, 200, 255),
                 AutoSize = true,
-                Location = new Point(70, 45),
                 MaximumSize = new Size(300, 50),
                 UseCompatibleTextRendering = false
             };
 
-            card.Controls.AddRange(new Control[] { iconLabel, titleLabel, subtitleLabel });
+            var textPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+            titleLabel.Location = new Point(0, 5);
+            subtitleLabel.Location = new Point(0, 38);
+            textPanel.Controls.AddRange(new Control[] { titleLabel, subtitleLabel });
+
+            var layout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1,
+                BackColor = Color.Transparent,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            layout.Controls.Add(iconLabel, 0, 0);
+            layout.Controls.Add(textPanel, 1, 0);
+
+            card.Controls.Add(layout);
             return card;
         }
 

@@ -72,12 +72,12 @@
             // btnAdd
             // 
             btnAdd.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnAdd.BackColor = Color.FromArgb(79, 70, 229);
+            btnAdd.BackColor = Color.FromArgb(34, 197, 94);
             btnAdd.FlatAppearance.BorderSize = 0;
             btnAdd.FlatStyle = FlatStyle.Flat;
             btnAdd.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             btnAdd.ForeColor = Color.White;
-            btnAdd.Location = new Point(1487, 74);
+            btnAdd.Location = new Point(1487, 70);
             btnAdd.Margin = new Padding(5);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new Size(203, 61);
@@ -90,11 +90,11 @@
             // 
             txtSearch.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             txtSearch.Font = new Font("Segoe UI", 11F);
-            txtSearch.Location = new Point(276, 80);
+            txtSearch.Location = new Point(276, 70);
             txtSearch.Margin = new Padding(5);
             txtSearch.Name = "txtSearch";
             txtSearch.PlaceholderText = "Tìm kiếm";
-            txtSearch.Size = new Size(1184, 47);
+            txtSearch.Size = new Size(1184, 48);
             txtSearch.TabIndex = 2;
             txtSearch.TextChanged += txtSearch_TextChanged;
             // 
@@ -104,7 +104,7 @@
             cboSort.Font = new Font("Segoe UI", 11F);
             cboSort.FormattingEnabled = true;
             cboSort.Items.AddRange(new object[] { "Họ tên", "Mã KH", "Số điện thoại" });
-            cboSort.Location = new Point(20, 80);
+            cboSort.Location = new Point(20, 70);
             cboSort.Margin = new Padding(5);
             cboSort.Name = "cboSort";
             cboSort.Size = new Size(225, 48);
@@ -122,6 +122,7 @@
             lblTitle.Size = new Size(430, 78);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "KHÁCH HÀNG";
+            lblTitle.Visible = false;
             // 
             // FrmKhachHang
             // 

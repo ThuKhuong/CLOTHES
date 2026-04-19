@@ -10,5 +10,6 @@ namespace QLBH.DTO
         public string? DChi { get; set; }
         public string SDT { get; set; } = string.Empty;
         public string? Email { get; set; }
+        public int Diem { get; set; }
     }
 }

@@ -11,7 +11,7 @@ namespace QLBH.DAL
         public DataTable GetAll()
         {
             const string sql = @"
-                SELECT MAKH, HOTEN, GIOITINH, DCHI, SDT, EMAIL 
+                SELECT MAKH, HOTEN, GIOITINH, DCHI, SDT, EMAIL, DIEM 
                 FROM KHACHHANG 
                 ORDER BY HOTEN";
             
@@ -21,7 +21,7 @@ namespace QLBH.DAL
         public DataTable Search(string keyword)
         {
             const string sql = @"
-                SELECT MAKH, HOTEN, GIOITINH, DCHI, SDT, EMAIL 
+                SELECT MAKH, HOTEN, GIOITINH, DCHI, SDT, EMAIL, DIEM 
                 FROM KHACHHANG 
                 WHERE (HOTEN LIKE @keyword OR SDT LIKE @keyword OR EMAIL LIKE @keyword OR MAKH LIKE @keyword)
                 ORDER BY HOTEN";
@@ -57,8 +57,8 @@ namespace QLBH.DAL
         public bool Insert(KhachHangDto khachHang)
         {
             const string sql = @"
-                INSERT INTO KHACHHANG (MAKH, HOTEN, GIOITINH, DCHI, SDT, EMAIL)
-                VALUES (@MAKH, @HOTEN, @GIOITINH, @DCHI, @SDT, @EMAIL)";
+                INSERT INTO KHACHHANG (MAKH, HOTEN, GIOITINH, DCHI, SDT, EMAIL, DIEM)
+                VALUES (@MAKH, @HOTEN, @GIOITINH, @DCHI, @SDT, @EMAIL, @DIEM)";
 
             var parameters = new[]
             {
@@ -67,7 +67,8 @@ namespace QLBH.DAL
                 new SqlParameter("@GIOITINH", khachHang.GioiTinh ?? (object)DBNull.Value),
                 new SqlParameter("@DCHI", khachHang.DChi ?? (object)DBNull.Value),
                 new SqlParameter("@SDT", khachHang.SDT),
-                new SqlParameter("@EMAIL", khachHang.Email ?? (object)DBNull.Value)
+                new SqlParameter("@EMAIL", khachHang.Email ?? (object)DBNull.Value),
+                new SqlParameter("@DIEM", khachHang.Diem)
             };
 
             return Db.Execute(sql, parameters) > 0;
@@ -78,7 +79,7 @@ namespace QLBH.DAL
             const string sql = @"
                 UPDATE KHACHHANG 
                 SET HOTEN = @HOTEN, GIOITINH = @GIOITINH, DCHI = @DCHI, 
-                    SDT = @SDT, EMAIL = @EMAIL 
+                    SDT = @SDT, EMAIL = @EMAIL, DIEM = @DIEM 
                 WHERE MAKH = @MAKH";
 
             var parameters = new[]
@@ -88,7 +89,8 @@ namespace QLBH.DAL
                 new SqlParameter("@GIOITINH", khachHang.GioiTinh ?? (object)DBNull.Value),
                 new SqlParameter("@DCHI", khachHang.DChi ?? (object)DBNull.Value),
                 new SqlParameter("@SDT", khachHang.SDT),
-                new SqlParameter("@EMAIL", khachHang.Email ?? (object)DBNull.Value)
+                new SqlParameter("@EMAIL", khachHang.Email ?? (object)DBNull.Value),
+                new SqlParameter("@DIEM", khachHang.Diem)
             };
 
             return Db.Execute(sql, parameters) > 0;
@@ -105,7 +107,7 @@ namespace QLBH.DAL
         public KhachHangDto? GetById(string maKH)
         {
             const string sql = @"
-                SELECT MAKH, HOTEN, GIOITINH, DCHI, SDT, EMAIL 
+                SELECT MAKH, HOTEN, GIOITINH, DCHI, SDT, EMAIL, DIEM 
                 FROM KHACHHANG 
                 WHERE MAKH = @MAKH";
             
@@ -122,8 +124,24 @@ namespace QLBH.DAL
                 GioiTinh = row["GIOITINH"] == DBNull.Value ? null : row["GIOITINH"].ToString(),
                 DChi = row["DCHI"] == DBNull.Value ? null : row["DCHI"].ToString(),
                 SDT = row["SDT"].ToString()!,
-                Email = row["EMAIL"] == DBNull.Value ? null : row["EMAIL"].ToString()
+                Email = row["EMAIL"] == DBNull.Value ? null : row["EMAIL"].ToString(),
+                Diem = row.Table.Columns.Contains("DIEM") && row["DIEM"] != DBNull.Value ? Convert.ToInt32(row["DIEM"]) : 0
             };
+        }
+
+        public int GetDiem(string maKh)
+        {
+            const string sql = "SELECT DIEM FROM KHACHHANG WHERE MAKH = @MAKH";
+            var result = Db.Scalar(sql, new SqlParameter("@MAKH", maKh));
+            return result == null || result == DBNull.Value ? 0 : Convert.ToInt32(result);
+        }
+
+        public int UpdateDiem(string maKh, int diem)
+        {
+            const string sql = "UPDATE KHACHHANG SET DIEM = @DIEM WHERE MAKH = @MAKH";
+            return Db.Execute(sql,
+                new SqlParameter("@DIEM", diem),
+                new SqlParameter("@MAKH", maKh));
         }
     }
 }

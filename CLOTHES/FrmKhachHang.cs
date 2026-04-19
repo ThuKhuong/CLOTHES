@@ -19,6 +19,7 @@ namespace CLOTHES
         {
             InitializeComponent();
             Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            panelList.SizeChanged += (_, __) => UpdateRowWidths();
         }
 
         private void FrmKhachHang_Load(object sender, EventArgs e)
@@ -41,7 +42,8 @@ namespace CLOTHES
                 GioiTinh = r["GIOITINH"] == DBNull.Value ? null : r["GIOITINH"].ToString(),
                 DChi = r["DCHI"] == DBNull.Value ? null : r["DCHI"].ToString(),
                 SDT = r["SDT"].ToString()!,
-                Email = r["EMAIL"] == DBNull.Value ? null : r["EMAIL"].ToString()
+                Email = r["EMAIL"] == DBNull.Value ? null : r["EMAIL"].ToString(),
+                Diem = r.Table.Columns.Contains("DIEM") && r["DIEM"] != DBNull.Value ? Convert.ToInt32(r["DIEM"]) : 0
             }).ToList();
 
             ApplyFilterAndRender();
@@ -89,6 +91,35 @@ namespace CLOTHES
             }
 
             panelList.ResumeLayout();
+            UpdateRowWidths();
+        }
+
+        private void UpdateRowWidths()
+        {
+            if (panelList.Controls.Count == 0)
+            {
+                return;
+            }
+
+            var rowWidth = panelList.ClientSize.Width - SystemInformation.VerticalScrollBarWidth;
+            foreach (Control control in panelList.Controls)
+            {
+                if (control is Panel row)
+                {
+                    row.Width = rowWidth;
+                    foreach (Control child in row.Controls)
+                    {
+                        if (child is Label label && label.Text == "ĐỊA CHỈ")
+                        {
+                            label.Width = Math.Max(200, row.Width - 660);
+                        }
+                        else if (child is Label valueLabel && valueLabel.Location.X == 660)
+                        {
+                            valueLabel.Width = Math.Max(200, row.Width - 660);
+                        }
+                    }
+                }
+            }
         }
 
         private Control CreateHeaderRow()
@@ -104,7 +135,8 @@ namespace CLOTHES
             row.Controls.Add(MkHeaderLabel("MÃ KH", 0, 90));
             row.Controls.Add(MkHeaderLabel("TÊN KHÁCH HÀNG", 100, 280));
             row.Controls.Add(MkHeaderLabel("SỐ ĐIỆN THOẠI", 390, 160));
-            row.Controls.Add(MkHeaderLabel("ĐỊA CHỈ", 560, 1000));
+            row.Controls.Add(MkHeaderLabel("ĐIỂM", 560, 90));
+            row.Controls.Add(MkHeaderLabel("ĐỊA CHỈ", 660, Math.Max(200, row.Width - 660)));
 
             return row;
         }
@@ -129,7 +161,7 @@ namespace CLOTHES
                 Height = 44,
                 Width = panelList.ClientSize.Width - SystemInformation.VerticalScrollBarWidth,
                 Margin = new Padding(0, 0, 0, 10),
-                BackColor = Color.FromArgb(79, 70, 229),
+                BackColor = Color.White,
                 Cursor = Cursors.Hand
             };
 
@@ -144,14 +176,15 @@ namespace CLOTHES
             row.Controls.Add(MkCellLabel(kh.MaKH, 0, 90));
             row.Controls.Add(MkCellLabel(kh.HoTen, 100, 280));
             row.Controls.Add(MkCellLabel(kh.SDT, 390, 160));
-            row.Controls.Add(MkCellLabel(kh.DChi ?? string.Empty, 560, 600));
+            row.Controls.Add(MkCellLabel(kh.Diem.ToString("N0"), 560, 90));
+            row.Controls.Add(MkCellLabel(kh.DChi ?? string.Empty, 660, Math.Max(200, row.Width - 660)));
 
             void openEdit(object? _, EventArgs __) => ShowEditDialog(kh);
             row.Click += openEdit;
             foreach (Control c in row.Controls) c.Click += openEdit;
 
-            row.MouseEnter += (s, e) => row.BackColor = Color.FromArgb(99, 102, 241);
-            row.MouseLeave += (s, e) => row.BackColor = Color.FromArgb(79, 70, 229);
+            row.MouseEnter += (s, e) => row.BackColor = Color.FromArgb(243, 244, 246);
+            row.MouseLeave += (s, e) => row.BackColor = Color.White;
 
             return row;
         }
@@ -165,7 +198,7 @@ namespace CLOTHES
                 Width = w,
                 Height = 20,
                 Font = new Font("Segoe UI", 10F, FontStyle.Regular),
-                ForeColor = Color.White
+                ForeColor = Color.Black
             };
         }
 

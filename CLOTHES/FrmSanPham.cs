@@ -16,6 +16,9 @@ namespace CLOTHES
         private readonly SanPhamService _spService = new();
 
         private const int LowStockThreshold = 5;
+        private const int CardWidth = 260;
+        private const int CardHeight = 280;
+        private const int CardGap = 24;
 
         private DataTable? _spTable;
         private DataTable? _loaiTable;
@@ -119,15 +122,10 @@ namespace CLOTHES
             _selectedMaSp = null;
             _selectedCard = null;
 
-            int cardWidth = 260;
-            int cardHeight = 280;
-
-            int gap = 24;
-
             foreach (var r in rows)
             {
-                var card = (Panel)CreateProductCard(r, cardWidth, cardHeight);
-                card.Margin = new Padding(0, 0, gap, 24);
+                var card = (Panel)CreateProductCard(r, CardWidth, CardHeight);
+                card.Margin = new Padding(0, 0, CardGap, 24);
                 panelGrid.Controls.Add(card);
             }
 
@@ -330,13 +328,21 @@ namespace CLOTHES
             if (result != DialogResult.Yes)
                 return;
 
-            var (ok, msg) = _spService.Delete(maSp);
-            MessageBox.Show(msg, ok ? "Thành công" : "Lỗi",
-                MessageBoxButtons.OK,
-                ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+            try
+            {
+                var (ok, msg) = _spService.Delete(maSp);
+                MessageBox.Show(msg, ok ? "Thành công" : "Lỗi",
+                    MessageBoxButtons.OK,
+                    ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
 
-            if (ok)
-                LoadSanPham();
+                if (ok)
+                    LoadSanPham();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Có lỗi khi xóa sản phẩm: {ex.Message}", "Lỗi",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

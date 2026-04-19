@@ -294,6 +294,7 @@ ORDER BY sp.TENSP";
         string? maKm,
         string? ghiChu,
         string? hinhThucTt,
+        int diemDoi,
         List<(string maCt, int sl, decimal donGia)> items)
     {
         if (items.Count == 0)
@@ -306,7 +307,27 @@ ORDER BY sp.TENSP";
         {
             decimal tong1 = items.Sum(x => x.sl * x.donGia);
             var (maKmOk, phanTram) = ValidateKhuyenMai(maKm, ngay, tran);
-            decimal giam = maKmOk == null ? 0 : Math.Round(tong1 * phanTram / 100m, 0);
+            decimal giamKm = maKmOk == null ? 0 : Math.Round(tong1 * phanTram / 100m, 0);
+            if (giamKm < 0) giamKm = 0;
+            if (giamKm > tong1) giamKm = tong1;
+
+            int diemHienCo = 0;
+            int diemSuDung = 0;
+            decimal giamDiem = 0;
+            if (!string.IsNullOrWhiteSpace(maKh) && diemDoi > 0)
+            {
+                diemHienCo = GetDiemKhachHang(maKh!, tran);
+                diemSuDung = Math.Min(diemDoi, diemHienCo);
+                giamDiem = diemSuDung * 1000m;
+                var maxDiemDiscount = Math.Round(tong1 * 0.2m, 0);
+                if (giamDiem > maxDiemDiscount)
+                {
+                    giamDiem = maxDiemDiscount;
+                    diemSuDung = (int)Math.Floor(giamDiem / 1000m);
+                }
+            }
+
+            decimal giam = giamKm + giamDiem;
             if (giam < 0) giam = 0;
             if (giam > tong1) giam = tong1;
             decimal tong2 = tong1 - giam;
@@ -347,6 +368,13 @@ ORDER BY sp.TENSP";
                 DecreaseTonKho(it.maCt, it.sl, tran);
             }
 
+            if (!string.IsNullOrWhiteSpace(maKh))
+            {
+                int diemCong = (int)Math.Floor(tong2 / 20000m);
+                int diemMoi = Math.Max(0, diemHienCo - diemSuDung) + diemCong;
+                UpdateDiemKhachHang(maKh!, diemMoi, tran);
+            }
+
             tran.Commit();
             return (true, "Thanh toán thành công.", soHd);
         }
@@ -355,6 +383,25 @@ ORDER BY sp.TENSP";
             try { tran.Rollback(); } catch { /* ignore */ }
             return (false, $"Lỗi khi thanh toán: {ex.Message}", 0);
         }
+
+        return (false, "Lỗi khi thanh toán.", 0);
+    }
+
+    private static int GetDiemKhachHang(string maKh, SqlTransaction tran)
+    {
+        const string sql = "SELECT DIEM FROM KHACHHANG WHERE MAKH = @makh";
+        using var cmd = new SqlCommand(sql, tran.Connection!, tran);
+        cmd.Parameters.AddRange(new[] { P("@makh", maKh) });
+        var v = cmd.ExecuteScalar();
+        return v == null || v == DBNull.Value ? 0 : Convert.ToInt32(v);
+    }
+
+    private static void UpdateDiemKhachHang(string maKh, int diem, SqlTransaction tran)
+    {
+        const string sql = "UPDATE KHACHHANG SET DIEM = @diem WHERE MAKH = @makh";
+        using var cmd = new SqlCommand(sql, tran.Connection!, tran);
+        cmd.Parameters.AddRange(new[] { P("@diem", diem), P("@makh", maKh) });
+        cmd.ExecuteNonQuery();
     }
 
     private static int InsertHeader(

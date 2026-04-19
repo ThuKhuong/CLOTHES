@@ -266,6 +266,8 @@ public class FrmNhapHang : Form
             dgvSearch.Columns["TONKHO"].HeaderText = "Tồn";
             dgvSearch.Columns["GIABAN"].HeaderText = "Giá bán";
             dgvSearch.Columns["BARCODE"].HeaderText = "Barcode";
+
+            dgvSearch.Columns["GIABAN"].DefaultCellStyle.Format = "N0";
         }
     }
 

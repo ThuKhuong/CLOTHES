@@ -39,7 +39,7 @@ public class FrmKhuyenMaiEdit : Form
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
-        ClientSize = new Size(520, 260);
+        ClientSize = new Size(520, 300);
 
         BuildUi();
 

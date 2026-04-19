@@ -226,6 +226,9 @@ namespace CLOTHES
                 dgvCt.Columns["TONKHO"].HeaderText = "Tồn kho";
                 dgvCt.Columns["BARCODE"].HeaderText = "Barcode";
                 dgvCt.Columns["TRANGTHAI"].HeaderText = "TT";
+
+                dgvCt.Columns["GIABAN"].DefaultCellStyle.Format = "N0";
+                dgvCt.Columns["TONKHO"].DefaultCellStyle.Format = "N0";
             }
 
             bool has = dt.Rows.Count > 0;
@@ -354,7 +357,6 @@ namespace CLOTHES
             private TextBox txtSize = null!;
             private TextBox txtMau = null!;
             private NumericUpDown numGia = null!;
-            private NumericUpDown numTon = null!;
             private TextBox txtBar = null!;
             private CheckBox chkTt = null!;
             private Label lblHint = null!;
@@ -376,7 +378,7 @@ namespace CLOTHES
 
             private void Build()
             {
-                var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(16), ColumnCount = 2, RowCount = 8 };
+                var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(16), ColumnCount = 2, RowCount = 7 };
                 layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
                 layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
@@ -384,7 +386,6 @@ namespace CLOTHES
                 txtSize = new TextBox { Dock = DockStyle.Fill };
                 txtMau = new TextBox { Dock = DockStyle.Fill };
                 numGia = new NumericUpDown { Dock = DockStyle.Fill, Maximum = 999999999, DecimalPlaces = 0, ThousandsSeparator = true };
-                numTon = new NumericUpDown { Dock = DockStyle.Fill, Maximum = 9999999, DecimalPlaces = 0, ThousandsSeparator = true };
                 txtBar = new TextBox { Dock = DockStyle.Fill };
                 chkTt = new CheckBox { Text = "Đang bán", Dock = DockStyle.Left, Checked = true };
                 lblHint = new Label { Dock = DockStyle.Fill, ForeColor = Color.FromArgb(107, 114, 128) };
@@ -397,13 +398,11 @@ namespace CLOTHES
                 layout.Controls.Add(txtMau, 1, 2);
                 layout.Controls.Add(new Label { Text = "Giá bán", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 3);
                 layout.Controls.Add(numGia, 1, 3);
-                layout.Controls.Add(new Label { Text = "Tồn kho", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 4);
-                layout.Controls.Add(numTon, 1, 4);
-                layout.Controls.Add(new Label { Text = "Barcode", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 5);
-                layout.Controls.Add(txtBar, 1, 5);
-                layout.Controls.Add(new Label { Text = "Trạng thái", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 6);
-                layout.Controls.Add(chkTt, 1, 6);
-                layout.Controls.Add(lblHint, 0, 7);
+                layout.Controls.Add(new Label { Text = "Barcode", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 4);
+                layout.Controls.Add(txtBar, 1, 4);
+                layout.Controls.Add(new Label { Text = "Trạng thái", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 5);
+                layout.Controls.Add(chkTt, 1, 5);
+                layout.Controls.Add(lblHint, 0, 6);
                 layout.SetColumnSpan(lblHint, 2);
 
                 var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(16), Height = 64 };
@@ -457,7 +456,7 @@ namespace CLOTHES
                         Size = (txtSize.Text ?? string.Empty).Trim(),
                         Mau = (txtMau.Text ?? string.Empty).Trim(),
                         GiaBan = numGia.Value,
-                        TonKho = (int)numTon.Value,
+                        TonKho = 0,
                         BarCode = string.IsNullOrWhiteSpace(txtBar.Text) ? null : txtBar.Text.Trim(),
                         TrangThai = chkTt.Checked
                     };
@@ -503,7 +502,7 @@ namespace CLOTHES
                             Size = size,
                             Mau = mau,
                             GiaBan = numGia.Value,
-                            TonKho = (int)numTon.Value,
+                            TonKho = 0,
                             BarCode = string.IsNullOrWhiteSpace(txtBar.Text) ? null : txtBar.Text.Trim(),
                             TrangThai = chkTt.Checked
                         };
@@ -547,7 +546,6 @@ namespace CLOTHES
                 txtSize.Text = row["SIZE"].ToString();
                 txtMau.Text = row["MAU"].ToString();
                 numGia.Value = Convert.ToDecimal(row["GIABAN"]);
-                numTon.Value = Convert.ToDecimal(row["TONKHO"]);
                 txtBar.Text = row["BARCODE"] == DBNull.Value ? "" : row["BARCODE"].ToString();
                 chkTt.Checked = row["TRANGTHAI"] != DBNull.Value && Convert.ToBoolean(row["TRANGTHAI"]);
             }

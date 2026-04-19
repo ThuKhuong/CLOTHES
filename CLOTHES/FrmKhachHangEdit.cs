@@ -16,6 +16,7 @@ namespace CLOTHES
         private TextBox txtSDT = null!;
         private TextBox txtDiaChi = null!;
         private TextBox txtEmail = null!;
+        private TextBox txtDiem = null!;
         private Button btnSave = null!;
         private Button btnCancel = null!;
 
@@ -29,7 +30,7 @@ namespace CLOTHES
             MaximizeBox = false;
             MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(520, 320);
+            ClientSize = new Size(520, 360);
 
             BuildUi();
             LoadData();
@@ -42,7 +43,7 @@ namespace CLOTHES
                 Dock = DockStyle.Fill,
                 Padding = new Padding(16),
                 ColumnCount = 2,
-                RowCount = 6
+                RowCount = 7
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -51,6 +52,7 @@ namespace CLOTHES
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
@@ -71,6 +73,7 @@ namespace CLOTHES
                 ScrollBars = ScrollBars.Vertical
             };
             txtEmail = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 10F) };
+            txtDiem = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 10F), ReadOnly = true };
 
             layout.Controls.Add(new Label { Text = "Họ tên", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
             layout.Controls.Add(txtHoTen, 1, 0);
@@ -82,6 +85,8 @@ namespace CLOTHES
             layout.Controls.Add(txtDiaChi, 1, 3);
             layout.Controls.Add(new Label { Text = "Email", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 4);
             layout.Controls.Add(txtEmail, 1, 4);
+            layout.Controls.Add(new Label { Text = "Điểm", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 5);
+            layout.Controls.Add(txtDiem, 1, 5);
 
             var buttons = new FlowLayoutPanel
             {
@@ -114,7 +119,7 @@ namespace CLOTHES
             buttons.Controls.Add(btnSave);
             buttons.Controls.Add(btnCancel);
 
-            layout.Controls.Add(buttons, 0, 5);
+            layout.Controls.Add(buttons, 0, 6);
             layout.SetColumnSpan(buttons, 2);
 
             Controls.Add(layout);
@@ -130,6 +135,7 @@ namespace CLOTHES
             txtSDT.Text = _editing.SDT;
             txtDiaChi.Text = _editing.DChi ?? string.Empty;
             txtEmail.Text = _editing.Email ?? string.Empty;
+            txtDiem.Text = _editing.Diem.ToString("N0");
 
             cboGioiTinh.SelectedIndex = _editing.GioiTinh switch
             {
@@ -148,7 +154,8 @@ namespace CLOTHES
                 GioiTinh = cboGioiTinh.SelectedItem?.ToString(),
                 SDT = (txtSDT.Text ?? string.Empty).Trim(),
                 DChi = string.IsNullOrWhiteSpace(txtDiaChi.Text) ? null : txtDiaChi.Text.Trim(),
-                Email = string.IsNullOrWhiteSpace(txtEmail.Text) ? null : txtEmail.Text.Trim()
+                Email = string.IsNullOrWhiteSpace(txtEmail.Text) ? null : txtEmail.Text.Trim(),
+                Diem = _editing?.Diem ?? 0
             };
 
             var (ok, msg) = _editing == null

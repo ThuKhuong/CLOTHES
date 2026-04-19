@@ -19,7 +19,6 @@
         {
             panelRoot = new Panel();
             panelHeader = new Panel();
-            lblTitle = new Label();
             cboLoai = new ComboBox();
             cboSort = new ComboBox();
             chkLowStockOnly = new CheckBox();
@@ -52,23 +51,11 @@
             panelHeader.Controls.Add(chkLowStockOnly);
             panelHeader.Controls.Add(cboSort);
             panelHeader.Controls.Add(cboLoai);
-            panelHeader.Controls.Add(lblTitle);
             panelHeader.Dock = DockStyle.Top;
             panelHeader.Location = new Point(24, 24);
             panelHeader.Name = "panelHeader";
             panelHeader.Size = new Size(1152, 104);
             panelHeader.TabIndex = 0;
-            // 
-            // lblTitle
-            // 
-            lblTitle.AutoSize = true;
-            lblTitle.Font = new Font("Segoe UI", 22F, FontStyle.Bold, GraphicsUnit.Point);
-            lblTitle.ForeColor = Color.FromArgb(79, 70, 229);
-            lblTitle.Location = new Point(0, 0);
-            lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(151, 50);
-            lblTitle.TabIndex = 0;
-            lblTitle.Text = "SẢN PHẨM";
             // 
             // cboLoai
             // 
@@ -127,14 +114,14 @@
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(130, 40);
             btnDelete.TabIndex = 4;
-            btnDelete.Text = "🗑️ XÓA";
+            btnDelete.Text = "Xóa";
             btnDelete.UseVisualStyleBackColor = false;
             btnDelete.Click += btnDelete_Click;
             // 
             // btnAdd
             // 
             btnAdd.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnAdd.BackColor = Color.FromArgb(79, 70, 229);
+            btnAdd.BackColor = Color.FromArgb(34, 197, 94);
             btnAdd.FlatAppearance.BorderSize = 0;
             btnAdd.FlatStyle = FlatStyle.Flat;
             btnAdd.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
@@ -143,7 +130,7 @@
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new Size(130, 40);
             btnAdd.TabIndex = 5;
-            btnAdd.Text = "➕ THÊM";
+            btnAdd.Text = "Thêm";
             btnAdd.UseVisualStyleBackColor = false;
             btnAdd.Click += btnAdd_Click;
             // 
@@ -152,11 +139,13 @@
             panelGrid.AutoScroll = true;
             panelGrid.BackColor = Color.Transparent;
             panelGrid.Dock = DockStyle.Fill;
+            panelGrid.FlowDirection = FlowDirection.LeftToRight;
             panelGrid.Location = new Point(24, 128);
             panelGrid.Name = "panelGrid";
             panelGrid.Padding = new Padding(0, 8, 0, 0);
             panelGrid.Size = new Size(1152, 568);
             panelGrid.TabIndex = 1;
+            panelGrid.WrapContents = true;
             // 
             // FrmSanPham
             // 
@@ -171,7 +160,6 @@
             Load += FrmSanPham_Load;
             panelRoot.ResumeLayout(false);
             panelHeader.ResumeLayout(false);
-            panelHeader.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -179,7 +167,6 @@
 
         private Panel panelRoot;
         private Panel panelHeader;
-        private Label lblTitle;
         private ComboBox cboLoai;
         private ComboBox cboSort;
         private TextBox txtSearch;
