@@ -16,6 +16,7 @@ namespace CLOTHES
         private Panel userInfoPanel;
         private Button selectedButton;
         private Image? _avatarImage;
+        private object lowStock;
         private readonly HoaDonService _hoaDonService = new();
 
         private const bool ShowExperimentalMenuItems = false;
@@ -426,6 +427,7 @@ namespace CLOTHES
 
             var kpiRevenue = CreateDashboardCard("Doanh thu", $"{doanhThu:N0} VNĐ", Color.FromArgb(16, 185, 129), "💰");
             var kpiOrders = CreateDashboardCard("Số đơn", $"{soDon:N0}", Color.FromArgb(59, 130, 246), "🧾");
+            
 
             var kpiRow = new FlowLayoutPanel
             {
@@ -446,7 +448,6 @@ namespace CLOTHES
 
             kpiRow.Controls.Add(kpiRevenue);
             kpiRow.Controls.Add(kpiOrders);
-
 
             dashboardPanel.Controls.AddRange(new Control[] { titleLabel, welcomeCard, kpiRow });
             panelMain.Controls.Add(dashboardPanel);

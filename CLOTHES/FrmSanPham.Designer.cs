@@ -54,7 +54,7 @@
             panelHeader.Dock = DockStyle.Top;
             panelHeader.Location = new Point(24, 24);
             panelHeader.Name = "panelHeader";
-            panelHeader.Size = new Size(1152, 104);
+            panelHeader.Size = new Size(1152, 132);
             panelHeader.TabIndex = 0;
             // 
             // cboLoai
@@ -84,7 +84,7 @@
             chkLowStockOnly.AutoSize = true;
             chkLowStockOnly.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             chkLowStockOnly.ForeColor = Color.FromArgb(220, 38, 38);
-            chkLowStockOnly.Location = new Point(348, 18);
+            chkLowStockOnly.Location = new Point(900, 98);
             chkLowStockOnly.Name = "chkLowStockOnly";
             chkLowStockOnly.Size = new Size(280, 27);
             chkLowStockOnly.TabIndex = 6;

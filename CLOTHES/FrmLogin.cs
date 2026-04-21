@@ -214,24 +214,13 @@ namespace CLOTHES
             };
 
             // ===== Links =====
-            var linkRegister = new LinkLabel
-            {
-                Text = "Đăng ký",
-                AutoSize = true,
-                Font = new Font("Segoe UI", 10),
-                LinkColor = Color.FromArgb(92, 85, 255),
-                Location = new Point(120, 480)
-            };
-            linkRegister.LinkClicked += LinkRegister_LinkClicked;
-            right.Controls.Add(linkRegister);
-
             var linkForgot = new LinkLabel
             {
                 Text = "Quên mật khẩu",
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10), 
                 LinkColor = Color.FromArgb(92, 85, 255),
-                Location = new Point(250, 480) 
+                Location = new Point(120, 480) 
             };
             linkForgot.LinkClicked += LinkForgot_LinkClicked;
             right.Controls.Add(linkForgot);
@@ -241,24 +230,6 @@ namespace CLOTHES
         {
             if (textBox == null) return "";
             return textBox.Text == placeholder ? "" : textBox.Text.Trim();
-        }
-
-        private void LinkRegister_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
-        {
-            using var frm = new FrmRegister();
-            if (frm.ShowDialog(this) == DialogResult.OK)
-            {
-                MessageBox.Show("Đăng ký thành công! Vui lòng đăng nhập.", "Thông báo",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                if (_txtUsername != null && !string.IsNullOrWhiteSpace(frm.RegisteredUsername))
-                {
-                    _txtUsername.Text = frm.RegisteredUsername;
-                    _txtUsername.ForeColor = Color.FromArgb(40, 40, 40);
-                }
-
-                _txtPassword?.Focus();
-            }
         }
 
         private void LinkForgot_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)

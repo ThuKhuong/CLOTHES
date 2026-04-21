@@ -83,14 +83,12 @@ public class FrmThongKe : Form
         var filter = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
         dtFrom = new DateTimePicker { Width = 150, Format = DateTimePickerFormat.Short };
         dtTo = new DateTimePicker { Width = 150, Format = DateTimePickerFormat.Short };
-        btnLoad = new Button { Text = "Xem", Width = 80, Height = 30 };
-        btnExport = new Button { Text = "Xuất Excel", Width = 100, Height = 30 };
+        btnLoad = new Button { Text = "Xem", Width = 80, Height = 30};
+        btnExport = new Button { Text = "Xuất Excel", Width = 100, Height = 30, BackColor = Color.FromArgb(34, 197, 94), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
 
         btnLoad.Click += (_, __) => SafeCall(LoadData);
         btnExport.Click += (_, __) => SafeCall(ExportThongKe);
 
-        // Avoid reloading while the user is interacting with the calendar drop-down.
-        // We debounce reload to prevent UI interruptions that can make the picker feel "not selectable".
         dtFrom.CloseUp += (_, __) => RequestReload();
         dtTo.CloseUp += (_, __) => RequestReload();
         dtFrom.ValueChanged += (_, __) => RequestReload();

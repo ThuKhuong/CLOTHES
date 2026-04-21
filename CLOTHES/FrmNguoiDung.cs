@@ -49,12 +49,15 @@ public partial class FrmNguoiDung : Form
 		gridUsers.SelectionMode = DataGridViewSelectionMode.CellSelect;
 		gridUsers.MultiSelect = false;
 		gridUsers.AllowUserToAddRows = false;
-		gridUsers.EditMode = DataGridViewEditMode.EditOnEnter;
+		gridUsers.ReadOnly = true;
+		gridUsers.EditMode = DataGridViewEditMode.EditProgrammatically;
 
 		gridUsers.CurrentCellDirtyStateChanged -= GridUsers_CurrentCellDirtyStateChanged;
 		gridUsers.CurrentCellDirtyStateChanged += GridUsers_CurrentCellDirtyStateChanged;
 		gridUsers.DataError -= GridUsers_DataError;
 		gridUsers.DataError += GridUsers_DataError;
+		gridUsers.CellDoubleClick -= GridUsers_CellDoubleClick;
+		gridUsers.CellDoubleClick += GridUsers_CellDoubleClick;
 
 		if (gridUsers.Columns.Contains("TRANGTHAI"))
 			gridUsers.Columns["TRANGTHAI"].HeaderText = "Hoạt động";
@@ -110,7 +113,9 @@ public partial class FrmNguoiDung : Form
 			HeaderText = "VAITRO",
 			DataPropertyName = "VAITRO",
 			FlatStyle = FlatStyle.Flat,
-			DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
+			DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton,
+			DisplayStyleForCurrentCellOnly = true,
+			ReadOnly = true
 		};
 		col.Items.AddRange("ADMIN");
 		if (_table != null && _table.Columns.Contains("VAITRO"))
@@ -129,74 +134,202 @@ public partial class FrmNguoiDung : Form
 		gridUsers.Columns.Insert(roleIndex, col);
 	}
 
-	private string? SelectedMaNd => gridUsers.CurrentRow?.Cells["MAND"]?.Value?.ToString();
- private string? SelectedVaiTro => gridUsers.CurrentRow?.Cells["VAITRO"]?.Value?.ToString();
+	private DataGridViewRow? CurrentRow
+	{
+		get
+		{
+			if (gridUsers.CurrentRow != null)
+				return gridUsers.CurrentRow;
+			if (gridUsers.SelectedCells.Count > 0)
+				return gridUsers.SelectedCells[0].OwningRow;
+			return null;
+		}
+	}
+
+	private string? SelectedMaNd => CurrentRow?.Cells["MAND"]?.Value?.ToString();
+	private string? SelectedVaiTro => CurrentRow?.Cells["VAITRO"]?.Value?.ToString();
 
 	private void btnReload_Click(object sender, EventArgs e) => LoadUsers();
 
-	private void btnToggleStatus_Click(object sender, EventArgs e)
+	private void btnAddUser_Click(object sender, EventArgs e)
 	{
-		var maNd = SelectedMaNd;
-		if (string.IsNullOrWhiteSpace(maNd))			
+		using var dlg = new FrmNguoiDungCreate();
+		dlg.StartPosition = FormStartPosition.CenterParent;
+		if (dlg.ShowDialog(this) != DialogResult.OK)
 			return;
 
-		var current = false;
-		var val = gridUsers.CurrentRow?.Cells["TRANGTHAI"]?.Value;
-		if (val is bool b) current = b;
-		else if (val != null && bool.TryParse(val.ToString(), out var parsed)) current = parsed;
+		var (ok, msg) = _service.CreateUser(
+			dlg.TenNd,
+			dlg.Sdt,
+			dlg.Username,
+			dlg.Password,
+			dlg.VaiTro,
+			dlg.TrangThai);
 
-		var next = !current;
-		var (ok, msg) = _service.UpdateStatus(maNd, next);
 		MessageBox.Show(msg, ok ? "Thành công" : "Lỗi",
 			MessageBoxButtons.OK,
 			ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
 		if (ok) LoadUsers();
 	}
 
-	private void btnUpdateRole_Click(object sender, EventArgs e)
+	private void GridUsers_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
 	{
-        if (_table == null)
+		if (e.RowIndex < 0)
+			return;
+		if (_table == null)
 			return;
 
-        gridUsers.EndEdit();
-		gridUsers.CommitEdit(DataGridViewDataErrorContexts.Commit);
-
-		var changed = _table.GetChanges();
-		if (changed == null || changed.Rows.Count == 0)
-		{
-			MessageBox.Show("Không có thay đổi để lưu.", "Thông báo",
-				MessageBoxButtons.OK, MessageBoxIcon.Information);
+		var row = gridUsers.Rows[e.RowIndex];
+		var maNd = row.Cells["MAND"].Value?.ToString() ?? string.Empty;
+		if (string.IsNullOrWhiteSpace(maNd))
 			return;
-		}
 
-		int success = 0;
-		int failed = 0;
+		var dlg = new FrmNguoiDungCreate(row);
+		dlg.StartPosition = FormStartPosition.CenterParent;
+		if (dlg.ShowDialog(this) != DialogResult.OK)
+			return;
 
-        foreach (DataRow row in changed.Rows)
-		{
-         var maNd = row["MAND", DataRowVersion.Current]?.ToString();
-			var tenNd = row["TENND", DataRowVersion.Current]?.ToString() ?? string.Empty;
-			var sdt = row["SDT", DataRowVersion.Current]?.ToString() ?? string.Empty;
-			var vaiTro = row["VAITRO", DataRowVersion.Current]?.ToString();
-			if (string.IsNullOrWhiteSpace(maNd) || string.IsNullOrWhiteSpace(vaiTro))
-				continue;
+		var (ok, msg) = _service.UpdateUser(
+			dlg.MaNd,
+			dlg.TenNd,
+			dlg.Sdt,
+			dlg.VaiTro,
+			dlg.TrangThai,
+			dlg.Password);
 
-			var okAll = true;
-
-			var (okInfo, _) = _service.UpdateInfo(maNd, tenNd, sdt);
-			okAll &= okInfo;
-
-			var (okRole, _) = _service.UpdateRole(maNd, vaiTro);
-			okAll &= okRole;
-
-			if (okAll) success++;
-			else failed++;
-		}
-
-		MessageBox.Show($"Đã lưu: {success}.", "Kết quả",
+		MessageBox.Show(msg, ok ? "Thành công" : "Lỗi",
 			MessageBoxButtons.OK,
-			MessageBoxIcon.Information);
+			ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+		if (ok) LoadUsers();
+	}
 
-		LoadUsers();
+	private sealed class FrmNguoiDungCreate : Form
+	{
+		public string MaNd => txtMaNd.Text.Trim();
+		public string TenNd => txtTenNd.Text.Trim();
+		public string Sdt => txtSdt.Text.Trim();
+		public string Username => txtUsername.Text.Trim();
+		public string Password => txtPassword.Text;
+		public string VaiTro => cboRole.SelectedItem?.ToString() ?? string.Empty;
+		public bool TrangThai => chkActive.Checked;
+
+		private readonly bool _isEdit;
+		private readonly string _originalUsername;
+
+		private readonly TextBox txtMaNd = new();
+		private readonly TextBox txtTenNd = new();
+		private readonly TextBox txtSdt = new();
+		private readonly TextBox txtUsername = new();
+		private readonly TextBox txtPassword = new();
+		private readonly ComboBox cboRole = new();
+		private readonly CheckBox chkActive = new();
+
+		public FrmNguoiDungCreate()
+		{
+			Text = "Thêm người dùng";
+			_isEdit = false;
+			_originalUsername = string.Empty;
+			Font = new Font("Segoe UI", 9F);
+			FormBorderStyle = FormBorderStyle.FixedDialog;
+			ClientSize = new Size(420, 360);
+			MaximizeBox = false;
+			MinimizeBox = false;
+			BuildUi();
+		}
+
+		public FrmNguoiDungCreate(DataGridViewRow row)
+		{
+			Text = "Sửa người dùng";
+			_isEdit = true;
+			Font = new Font("Segoe UI", 9F);
+			FormBorderStyle = FormBorderStyle.FixedDialog;
+			ClientSize = new Size(420, 360);
+			MaximizeBox = false;
+			MinimizeBox = false;
+			BuildUi();
+
+			txtMaNd.Text = row.Cells["MAND"].Value?.ToString() ?? string.Empty;
+			txtTenNd.Text = row.Cells["TENND"].Value?.ToString() ?? string.Empty;
+			txtSdt.Text = row.Cells["SDT"].Value?.ToString() ?? string.Empty;
+			var username = row.Cells["USERNAME"].Value?.ToString() ?? string.Empty;
+			_originalUsername = username;
+			txtUsername.Text = username;
+			txtUsername.ReadOnly = true;
+
+			var role = row.Cells["VAITRO"].Value?.ToString() ?? string.Empty;
+			if (!string.IsNullOrWhiteSpace(role) && cboRole.Items.Contains(role))
+				cboRole.SelectedItem = role;
+			else if (cboRole.Items.Count > 0)
+				cboRole.SelectedIndex = 0;
+
+			var status = row.Cells["TRANGTHAI"].Value;
+			chkActive.Checked = status is bool b
+				? b
+				: (status is int i ? i != 0
+				: (status != null && bool.TryParse(status.ToString(), out var parsed) ? parsed : true));
+
+			txtPassword.PlaceholderText = "Để trống nếu không đổi";
+		}
+
+		private void BuildUi()
+		{
+			var layout = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				Padding = new Padding(16),
+				ColumnCount = 2,
+				RowCount = 7
+			};
+			layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+			layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+			layout.Controls.Add(new Label { Text = "Mã ND", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
+			layout.Controls.Add(txtMaNd, 1, 0);
+			layout.Controls.Add(new Label { Text = "Họ tên", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
+			layout.Controls.Add(txtTenNd, 1, 1);
+			layout.Controls.Add(new Label { Text = "SĐT", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 2);
+			layout.Controls.Add(txtSdt, 1, 2);
+			layout.Controls.Add(new Label { Text = "Tài khoản", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 3);
+			layout.Controls.Add(txtUsername, 1, 3);
+			layout.Controls.Add(new Label { Text = "Mật khẩu", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 4);
+			layout.Controls.Add(txtPassword, 1, 4);
+			layout.Controls.Add(new Label { Text = "Vai trò", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 5);
+			layout.Controls.Add(cboRole, 1, 5);
+			layout.Controls.Add(new Label { Text = "Trạng thái", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 6);
+			layout.Controls.Add(chkActive, 1, 6);
+
+			foreach (Control control in new Control[] { txtMaNd, txtTenNd, txtSdt, txtUsername, txtPassword, cboRole })
+			{
+				control.Dock = DockStyle.Fill;
+			}
+
+			txtPassword.UseSystemPasswordChar = true;
+			cboRole.DropDownStyle = ComboBoxStyle.DropDownList;
+			cboRole.Items.AddRange(new object[] { "ADMIN", "QUANLY", "NHANVIENNHAP", "NHANVIENBANHANG" });
+			cboRole.SelectedIndex = 3;
+			chkActive.Text = "Hoạt động";
+			chkActive.Checked = true;
+			chkActive.Dock = DockStyle.Left;
+			txtMaNd.ReadOnly = true;
+			if (!_isEdit)
+				txtMaNd.Text = new NguoiDungService().GetNextMaNd();
+
+			var buttons = new FlowLayoutPanel
+			{
+				Dock = DockStyle.Bottom,
+				Height = 64,
+				FlowDirection = FlowDirection.RightToLeft,
+				Padding = new Padding(16)
+			};
+			var btnSave = new Button { Text = "Lưu", Width = 100, Height = 32 };
+			var btnCancel = new Button { Text = "Hủy", Width = 100, Height = 32 };
+			btnSave.Click += (_, __) => DialogResult = DialogResult.OK;
+			btnCancel.Click += (_, __) => DialogResult = DialogResult.Cancel;
+			buttons.Controls.Add(btnSave);
+			buttons.Controls.Add(btnCancel);
+
+			Controls.Add(layout);
+			Controls.Add(buttons);
+		}
 	}
 }

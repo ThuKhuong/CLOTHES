@@ -14,7 +14,6 @@ public class FrmKhuyenMai : Form
     private Button btnAdd = null!;
     private Button btnEdit = null!;
     private Button btnDelete = null!;
-    private Button btnToggle = null!;
     private Button btnRefresh = null!;
 
     public FrmKhuyenMai()
@@ -35,19 +34,20 @@ public class FrmKhuyenMai : Form
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         var top = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
-        btnAdd = new Button { Text = "Thêm", Width = 90, Height = 32 };
-        btnEdit = new Button { Text = "Sửa", Width = 90, Height = 32 };
-        btnDelete = new Button { Text = "Xóa", Width = 90, Height = 32 };
-        btnToggle = new Button { Text = "Bật/Tắt", Width = 90, Height = 32 };
+        btnAdd = new Button { Text = "Thêm", Width = 90, Height = 32};
+        btnEdit = new Button { Text = "Sửa", Width = 90, Height = 32};
+        btnDelete = new Button {Text = "Xóa", Width = 90, Height = 32 };
+        btnAdd.FlatAppearance.BorderSize = 0;
+        btnEdit.FlatAppearance.BorderSize = 0;
+        btnDelete.FlatAppearance.BorderSize = 0;
         btnRefresh = new Button { Text = "Tải lại", Width = 90, Height = 32 };
 
         btnAdd.Click += (_, __) => Add();
         btnEdit.Click += (_, __) => Edit();
         btnDelete.Click += (_, __) => Delete();
-        btnToggle.Click += (_, __) => Toggle();
         btnRefresh.Click += (_, __) => LoadData();
 
-        top.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnToggle, btnRefresh });
+        top.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnRefresh });
 
         dgv = new DataGridView
         {
@@ -143,13 +143,4 @@ public class FrmKhuyenMai : Form
         if (ok) LoadData();
     }
 
-    private void Toggle()
-    {
-        var maKm = SelectedMaKm();
-        if (string.IsNullOrWhiteSpace(maKm)) return;
-
-        var (ok, msg) = _service.Toggle(maKm);
-        MessageBox.Show(msg, ok ? "Thành công" : "Lỗi", MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
-        if (ok) LoadData();
-    }
 }

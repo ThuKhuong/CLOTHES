@@ -137,6 +137,9 @@ namespace CLOTHES
             var maSp = r["MASP"].ToString() ?? string.Empty;
             var tenSp = r["TENSP"].ToString() ?? string.Empty;
             var hinh = r["HINHSP"] == DBNull.Value ? null : r["HINHSP"].ToString();
+            var isActive = r.Table.Columns.Contains("TRANGTHAI")
+                && r["TRANGTHAI"] != DBNull.Value
+                && Convert.ToBoolean(r["TRANGTHAI"]);
 
             var tongTon = 0;
             if (r.Table.Columns.Contains("TONGTON") && r["TONGTON"] != DBNull.Value)
@@ -156,7 +159,7 @@ namespace CLOTHES
             var card = new Panel
             {
                 Size = new Size(w, h),
-                BackColor = Color.White,
+                BackColor = isActive ? Color.White : Color.FromArgb(243, 244, 246),
                 Cursor = Cursors.Hand,
                 Tag = maSp
             };
@@ -192,7 +195,7 @@ namespace CLOTHES
                 Location = new Point(22, 178),
                 Size = new Size(w - 44, 44),
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(31, 41, 55)
+                ForeColor = isActive ? Color.FromArgb(31, 41, 55) : Color.FromArgb(107, 114, 128)
             };
 
             var lblPrice = new Label
@@ -201,7 +204,7 @@ namespace CLOTHES
                 Location = new Point(22, 228),
                 Size = new Size(w - 44, 24),
                 Font = new Font("Segoe UI", 10f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(17, 24, 39)
+                ForeColor = isActive ? Color.FromArgb(17, 24, 39) : Color.FromArgb(107, 114, 128)
             };
 
             var lblStock = new Label
@@ -210,8 +213,25 @@ namespace CLOTHES
                 Location = new Point(22, 252),
                 Size = new Size(w - 44, 22),
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                ForeColor = tongTon <= LowStockThreshold ? Color.FromArgb(220, 38, 38) : Color.FromArgb(100, 116, 139)
+                ForeColor = isActive
+                    ? (tongTon <= LowStockThreshold ? Color.FromArgb(220, 38, 38) : Color.FromArgb(100, 116, 139))
+                    : Color.FromArgb(148, 163, 184)
             };
+
+            Label? lblStatus = null;
+            if (!isActive)
+            {
+                lblStatus = new Label
+                {
+                    Text = "Ngừng kinh doanh",
+                    AutoSize = true,
+                    BackColor = Color.FromArgb(254, 226, 226),
+                    ForeColor = Color.FromArgb(185, 28, 28),
+                    Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                    Padding = new Padding(6, 2, 6, 2),
+                    Location = new Point(w - 22 - 110, 16)
+                };
+            }
 
             void select(object? _, EventArgs __)
             {
@@ -241,6 +261,8 @@ namespace CLOTHES
             card.Controls.Add(lblName);
             card.Controls.Add(lblPrice);
             card.Controls.Add(lblStock);
+            if (lblStatus != null)
+                card.Controls.Add(lblStatus);
 
             return card;
         }

@@ -274,7 +274,9 @@ SELECT TOP 50
     ct.MACT, ct.MASP, sp.TENSP, ct.SIZE, ct.MAU, ct.TONKHO, ct.GIABAN, ct.BARCODE
 FROM SANPHAM_CHITIET ct
 JOIN SANPHAM sp ON ct.MASP = sp.MASP
-WHERE ct.MACT LIKE @kw OR sp.TENSP LIKE @kw OR ct.BARCODE LIKE @kw
+WHERE sp.TRANGTHAI = 1
+  AND ct.TRANGTHAI = 1
+  AND (ct.MACT LIKE @kw OR sp.TENSP LIKE @kw OR ct.BARCODE LIKE @kw)
 ORDER BY sp.TENSP";
 
         return Db.Query(sql, P("@kw", $"%{keyword}%"));
@@ -282,7 +284,13 @@ ORDER BY sp.TENSP";
 
     public string? FindMaCtByBarcode(string barcode)
     {
-        const string sql = "SELECT TOP 1 MACT FROM SANPHAM_CHITIET WHERE BARCODE = @bc";
+        const string sql = @"
+SELECT TOP 1 ct.MACT
+FROM SANPHAM_CHITIET ct
+JOIN SANPHAM sp ON ct.MASP = sp.MASP
+WHERE ct.BARCODE = @bc
+  AND ct.TRANGTHAI = 1
+  AND sp.TRANGTHAI = 1";
         var v = Db.Scalar(sql, P("@bc", barcode));
         return v == null || v == DBNull.Value ? null : v.ToString();
     }

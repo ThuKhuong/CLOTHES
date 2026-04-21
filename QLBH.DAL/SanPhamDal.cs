@@ -138,10 +138,8 @@ WHERE MASP=@masp";
             const string sql1 = "DELETE FROM SANPHAM_CHITIET WHERE MASP=@masp";
             const string sql2 = "DELETE FROM SANPHAM WHERE MASP=@masp";
 
-            var p = new[] { P("@masp", maSp) };
-
-            Db.Execute(sql1, p);
-            return Db.Execute(sql2, p) > 0
+            Db.Execute(sql1, new[] { P("@masp", maSp) });
+            return Db.Execute(sql2, new[] { P("@masp", maSp) }) > 0
                 ? (true, "Xóa sản phẩm thành công")
                 : (false, "Không thể xóa sản phẩm");
         }
