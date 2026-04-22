@@ -18,7 +18,6 @@ public class FrmNhapHang : Form
     private ComboBox cboNhanVien = null!;
     private DateTimePicker dtNgay = null!;
     private TextBox txtGhiChu = null!;
-    private Button btnAddNcc = null!;
 
     private TextBox txtSearch = null!;
     private DataGridView dgvSearch = null!;
@@ -161,73 +160,19 @@ public class FrmNhapHang : Form
 
         cboNhanVien = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
         cboNcc = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
-        btnAddNcc = new Button { Text = "+", Width = 32, Height = 26 };
-        btnAddNcc.Click += (_, __) => AddNcc();
         dtNgay = new DateTimePicker { Dock = DockStyle.Fill, Format = DateTimePickerFormat.Custom, CustomFormat = "dd/MM/yyyy HH:mm" };
         txtGhiChu = new TextBox { Dock = DockStyle.Fill, Multiline = true, Height = 40 };
 
         header.Controls.Add(new Label { Text = "Nhân viên", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
         header.Controls.Add(cboNhanVien, 1, 0);
         header.Controls.Add(new Label { Text = "Nhà cung cấp", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
-        var nccRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
-        nccRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        nccRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 36));
-        cboNcc.Margin = new Padding(0, 0, 6, 0);
-        btnAddNcc.Dock = DockStyle.Fill;
-        nccRow.Controls.Add(cboNcc, 0, 0);
-        nccRow.Controls.Add(btnAddNcc, 1, 0);
-        header.Controls.Add(nccRow, 1, 1);
+        header.Controls.Add(cboNcc, 1, 1);
         header.Controls.Add(new Label { Text = "Ngày nhập", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 2);
         header.Controls.Add(dtNgay, 1, 2);
         header.Controls.Add(new Label { Text = "Ghi chú", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 3);
         header.Controls.Add(txtGhiChu, 1, 3);
 
         return header;
-    }
-
-    private void AddNcc()
-    {
-        using var dlg = new Form
-        {
-            Text = "Thêm nhà cung cấp",
-            StartPosition = FormStartPosition.CenterParent,
-            FormBorderStyle = FormBorderStyle.FixedDialog,
-            MaximizeBox = false,
-            MinimizeBox = false,
-            ClientSize = new Size(420, 260)
-        };
-
-        var lblTen = new Label { Text = "Tên NCC", Left = 20, Top = 20, Width = 100 };
-        var txtTen = new TextBox { Left = 130, Top = 16, Width = 260 };
-        var lblSdt = new Label { Text = "SĐT", Left = 20, Top = 60, Width = 100 };
-        var txtSdt = new TextBox { Left = 130, Top = 56, Width = 260 };
-        var lblDiaChi = new Label { Text = "Địa chỉ", Left = 20, Top = 100, Width = 100 };
-        var txtDiaChi = new TextBox { Left = 130, Top = 96, Width = 260 };
-        var lblEmail = new Label { Text = "Email", Left = 20, Top = 140, Width = 100 };
-        var txtEmail = new TextBox { Left = 130, Top = 136, Width = 260 };
-
-        var btnOk = new Button { Text = "Lưu", Left = 230, Top = 190, Width = 75, DialogResult = DialogResult.OK };
-        var btnCancel = new Button { Text = "Hủy", Left = 315, Top = 190, Width = 75, DialogResult = DialogResult.Cancel };
-
-        dlg.Controls.AddRange(new Control[] { lblTen, txtTen, lblSdt, txtSdt, lblDiaChi, txtDiaChi, lblEmail, txtEmail, btnOk, btnCancel });
-        dlg.AcceptButton = btnOk;
-        dlg.CancelButton = btnCancel;
-
-        if (dlg.ShowDialog(this) != DialogResult.OK)
-            return;
-
-        var (ok, msg, ma) = _service.AddNcc(txtTen.Text, txtSdt.Text, txtDiaChi.Text, txtEmail.Text);
-        MessageBox.Show(msg, ok ? "Thành công" : "Lỗi",
-            MessageBoxButtons.OK,
-            ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
-
-        if (!ok)
-            return;
-
-        var dtNcc = _service.GetAllNcc();
-        cboNcc.DataSource = dtNcc;
-        if (!string.IsNullOrWhiteSpace(ma))
-            cboNcc.SelectedValue = ma;
     }
 
     private void LoadLookups()

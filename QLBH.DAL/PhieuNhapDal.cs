@@ -149,6 +149,36 @@ WHERE ct.MAPN = @mapn";
         return Db.Query(sql);
     }
 
+    public DataTable GetAllNccDetails()
+    {
+        const string sql = "SELECT MANCC, TENNCC, SDT, DIACHI, EMAIL FROM NHACUNGCAP ORDER BY TENNCC";
+        return Db.Query(sql);
+    }
+
+    public int UpdateNcc(string maNcc, string tenNcc, string? sdt, string? diaChi, string? email)
+    {
+        const string sql = @"
+ UPDATE NHACUNGCAP
+ SET TENNCC = @tenncc,
+     SDT = @sdt,
+     DIACHI = @diachi,
+     EMAIL = @email
+ WHERE MANCC = @mancc";
+
+        return Db.Execute(sql,
+            P("@mancc", maNcc),
+            P("@tenncc", tenNcc),
+            P("@sdt", sdt),
+            P("@diachi", diaChi),
+            P("@email", email));
+    }
+
+    public int DeleteNcc(string maNcc)
+    {
+        const string sql = "DELETE FROM NHACUNGCAP WHERE MANCC = @mancc";
+        return Db.Execute(sql, P("@mancc", maNcc));
+    }
+
     public DataTable GetAllNhanVien()
     {
         const string sql = "SELECT MAND, TENND FROM NGUOIDUNG WHERE TRANGTHAI = 1 ORDER BY TENND";

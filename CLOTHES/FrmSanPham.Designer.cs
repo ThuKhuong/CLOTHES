@@ -54,7 +54,7 @@
             panelHeader.Dock = DockStyle.Top;
             panelHeader.Location = new Point(24, 24);
             panelHeader.Name = "panelHeader";
-            panelHeader.Size = new Size(1152, 132);
+            panelHeader.Size = new Size(1152, 124);
             panelHeader.TabIndex = 0;
             // 
             // cboLoai
@@ -62,7 +62,7 @@
             cboLoai.DropDownStyle = ComboBoxStyle.DropDownList;
             cboLoai.Font = new Font("Segoe UI", 11F);
             cboLoai.FormattingEnabled = true;
-            cboLoai.Location = new Point(4, 58);
+            cboLoai.Location = new Point(4, 16);
             cboLoai.Name = "cboLoai";
             cboLoai.Size = new Size(160, 33);
             cboLoai.TabIndex = 1;
@@ -73,7 +73,7 @@
             cboSort.Font = new Font("Segoe UI", 11F);
             cboSort.FormattingEnabled = true;
             cboSort.Items.AddRange(new object[] { "Tên SP", "Mã SP" });
-            cboSort.Location = new Point(176, 58);
+            cboSort.Location = new Point(176, 16);
             cboSort.Name = "cboSort";
             cboSort.Size = new Size(160, 33);
             cboSort.TabIndex = 2;
@@ -84,7 +84,7 @@
             chkLowStockOnly.AutoSize = true;
             chkLowStockOnly.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             chkLowStockOnly.ForeColor = Color.FromArgb(220, 38, 38);
-            chkLowStockOnly.Location = new Point(900, 98);
+            chkLowStockOnly.Location = new Point(870, 98);
             chkLowStockOnly.Name = "chkLowStockOnly";
             chkLowStockOnly.Size = new Size(280, 27);
             chkLowStockOnly.TabIndex = 6;
@@ -95,10 +95,10 @@
             // 
             txtSearch.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             txtSearch.Font = new Font("Segoe UI", 11F);
-            txtSearch.Location = new Point(348, 58);
+            txtSearch.Location = new Point(348, 16);
             txtSearch.Name = "txtSearch";
             txtSearch.PlaceholderText = "Tìm kiếm";
-            txtSearch.Size = new Size(650, 32);
+            txtSearch.Size = new Size(420, 32);
             txtSearch.TabIndex = 3;
             txtSearch.TextChanged += txtSearch_TextChanged;
             // 
@@ -110,7 +110,7 @@
             btnDelete.FlatStyle = FlatStyle.Flat;
             btnDelete.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             btnDelete.ForeColor = Color.White;
-            btnDelete.Location = new Point(870, 54);
+            btnDelete.Location = new Point(784, 16);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(130, 40);
             btnDelete.TabIndex = 4;
@@ -126,7 +126,7 @@
             btnAdd.FlatStyle = FlatStyle.Flat;
             btnAdd.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             btnAdd.ForeColor = Color.White;
-            btnAdd.Location = new Point(1010, 54);
+            btnAdd.Location = new Point(924, 16);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new Size(130, 40);
             btnAdd.TabIndex = 5;

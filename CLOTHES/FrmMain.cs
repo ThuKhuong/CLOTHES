@@ -2,6 +2,7 @@
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
 using QLBH.BLL;
 using QLBH.DTO;
@@ -15,11 +16,20 @@ namespace CLOTHES
         private Panel contentPanel;
         private Panel userInfoPanel;
         private Button selectedButton;
+        private readonly Dictionary<string, Button> _menuButtons = new(StringComparer.OrdinalIgnoreCase);
         private Image? _avatarImage;
         private object lowStock;
         private readonly HoaDonService _hoaDonService = new();
+        private readonly SanPhamService _sanPhamService = new();
+        private readonly KhachHangService _khachHangService = new();
+
+        private static readonly Color SidebarColor = Color.FromArgb(30, 41, 59);
+        private static readonly Color SidebarHoverColor = Color.FromArgb(51, 65, 85);
+        private static readonly Color SidebarActiveColor = Color.FromArgb(59, 130, 246);
+        private static readonly Color SidebarTextColor = Color.White;
 
         private const bool ShowExperimentalMenuItems = false;
+        private const int LowStockThreshold = 5;
 
         private bool IsRole(string role) =>
             _currentUser.VaiTro.Equals(role, StringComparison.OrdinalIgnoreCase);
@@ -74,7 +84,7 @@ namespace CLOTHES
             {
                 Width = 300,
                 Dock = DockStyle.Left,
-                BackColor = Color.FromArgb(245, 245, 245),
+                BackColor = SidebarColor,
                 Padding = new Padding(0),
                 Font = new Font("Segoe UI", 9F, FontStyle.Regular)
             };
@@ -83,7 +93,7 @@ namespace CLOTHES
             var sidebarContainer = new Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.Transparent,
+                BackColor = SidebarColor,
                 Margin = new Padding(0),
                 Padding = new Padding(0)
             };
@@ -132,7 +142,7 @@ namespace CLOTHES
             {
                 Height = 80,
                 Dock = DockStyle.Top,
-                BackColor = Color.Transparent,
+                BackColor = SidebarColor,
                 Padding = new Padding(15, 10, 15, 10),
                 Font = new Font("Segoe UI", 9F, FontStyle.Regular) // Ensure Vietnamese support
             };
@@ -176,7 +186,7 @@ namespace CLOTHES
             var userNameLabel = new Label
             {
                 Text = _currentUser.TenND,
-                ForeColor = Color.White,
+                ForeColor = SidebarTextColor,
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 Location = new Point(75, 20),
                 AutoSize = true
@@ -185,7 +195,7 @@ namespace CLOTHES
             var userRoleLabel = new Label
             {
                 Text = _currentUser.VaiTro,
-                ForeColor = Color.FromArgb(200, 200, 255),
+                ForeColor = Color.FromArgb(226, 232, 240),
                 Font = new Font("Segoe UI", 9, FontStyle.Regular),
                 Location = new Point(75, 42),
                 AutoSize = true
@@ -216,7 +226,7 @@ namespace CLOTHES
             var buttonsPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.Transparent,
+                BackColor = SidebarColor,
                 Padding = new Padding(10, 10, 10, 10),
                 AutoScroll = true,
                 AutoScrollMargin = new Size(0, 60),
@@ -227,7 +237,7 @@ namespace CLOTHES
             {
                 Dock = DockStyle.Top,
                 Height = userInfoPanel?.Height ?? 80,
-                BackColor = Color.Transparent
+                BackColor = SidebarColor
             };
             buttonsPanel.Controls.Add(topSpacer);
 
@@ -250,6 +260,7 @@ namespace CLOTHES
             {
                 list.Add(("NHẬP HÀNG", "📥", 0, () => OpenChildForm(() => new FrmNhapHang(_currentUser))));
                 list.Add(("PHIẾU NHẬP", "🧾", 0, () => OpenChildForm<FrmPhieuNhap>()));
+                list.Add(("NHÀ CUNG CẤP", "🏢", 0, () => OpenChildForm<FrmNhaCungCap>()));
             }
 
             if (IsAdmin || IsQuanLy)
@@ -280,6 +291,8 @@ namespace CLOTHES
             {
                 var menuItem = menuItems[i];
                 var button = CreateSidebarButton(menuItem.Text, menuItem.Icon, menuItem.Action, menuItem.Indent);
+                button.Tag = menuItem.Text;
+                _menuButtons[menuItem.Text] = button;
                 button.Location = new Point(buttonsPanel.Padding.Left, yPos);
                 button.Width = buttonsPanel.ClientSize.Width - buttonsPanel.Padding.Left - buttonsPanel.Padding.Right;
                 button.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -307,8 +320,8 @@ namespace CLOTHES
                 Text = $"{iconText}{text}",
                 Height = 50,
                 FlatStyle = FlatStyle.Flat,
-                BackColor = Color.Transparent,
-                ForeColor = Color.White,
+                BackColor = SidebarColor,
+                ForeColor = SidebarTextColor,
                 Font = new Font("Segoe UI Emoji", 11, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding = new Padding(indentPx, 0, 0, 0),    // tăng padding + hỗ trợ menu con
@@ -319,19 +332,19 @@ namespace CLOTHES
             };
 
             button.FlatAppearance.BorderSize = 0;
-            button.FlatAppearance.MouseOverBackColor = Color.FromArgb(120, 255, 255, 255);
-            button.FlatAppearance.MouseDownBackColor = Color.FromArgb(180, 255, 255, 255);
+            button.FlatAppearance.MouseOverBackColor = SidebarHoverColor;
+            button.FlatAppearance.MouseDownBackColor = SidebarHoverColor;
 
             button.MouseEnter += (s, e) =>
             {
                 if (button != selectedButton)
-                    button.BackColor = Color.FromArgb(60, 255, 255, 255);
+                    button.BackColor = SidebarHoverColor;
             };
 
             button.MouseLeave += (s, e) =>
             {
                 if (button != selectedButton)
-                    button.BackColor = Color.Transparent;
+                    button.BackColor = SidebarColor;
             };
 
             button.Click += (s, e) =>
@@ -348,36 +361,35 @@ namespace CLOTHES
             // Reset previous selection
             if (selectedButton != null)
             {
-                selectedButton.BackColor = Color.Transparent;
-                selectedButton.ForeColor = Color.White;
+                selectedButton.BackColor = SidebarColor;
+                selectedButton.ForeColor = SidebarTextColor;
                 selectedButton.Font = new Font("Segoe UI Emoji", 11, FontStyle.Regular);
             }
 
             // Set new selection
             selectedButton = button;
-            button.BackColor = Color.FromArgb(150, 255, 255, 255);
-            button.ForeColor = Color.White;
+            button.BackColor = SidebarActiveColor;
+            button.ForeColor = SidebarTextColor;
             button.Font = new Font("Segoe UI Emoji", 11, FontStyle.Bold); // Keep icons + make selected button bold
+        }
+
+        public void SelectMenu(string menuText)
+        {
+            if (_menuButtons.TryGetValue(menuText, out var button))
+            {
+                SelectButton(button);
+            }
         }
 
         private void ApplyGradientToSidebar()
         {
             sidebarPanel.Paint += (s, e) =>
             {
-                // During initialization/resize the panel can briefly have 0 height/width.
-                // LinearGradientBrush throws if the rectangle has 0 in any dimension.
                 if (sidebarPanel.ClientRectangle.Width <= 0 || sidebarPanel.ClientRectangle.Height <= 0)
                     return;
 
-                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias; // Better text rendering
-                using (var brush = new LinearGradientBrush(
-                    sidebarPanel.ClientRectangle,
-                    Color.FromArgb(88, 86, 214),    // Top color
-                    Color.FromArgb(118, 75, 255),   // Bottom color
-                    LinearGradientMode.Vertical))
-                {
-                    e.Graphics.FillRectangle(brush, sidebarPanel.ClientRectangle);
-                }
+                using var brush = new SolidBrush(SidebarColor);
+                e.Graphics.FillRectangle(brush, sidebarPanel.ClientRectangle);
             };
         }
 
@@ -414,25 +426,27 @@ namespace CLOTHES
                 UseCompatibleTextRendering = false
             };
 
-            var welcomeCard = CreateDashboardCard(
-                "Chào mừng trở lại",
-                $"Xin chào {_currentUser.TenND}, hôm nay bạn có gì mới?\nHệ thống quản lý cửa hàng quần áo hoạt động tốt.",
-                Color.FromArgb(139, 92, 246),
-                "👋"
-            );
-            welcomeCard.Location = new Point(30, 80);
-            welcomeCard.Size = new Size(500, 120);
-
             var (doanhThu, soDon) = GetDashboardSummary();
 
-            var kpiRevenue = CreateDashboardCard("Doanh thu", $"{doanhThu:N0} VNĐ", Color.FromArgb(16, 185, 129), "💰");
-            var kpiOrders = CreateDashboardCard("Số đơn", $"{soDon:N0}", Color.FromArgb(59, 130, 246), "🧾");
-            
+            var productTable = _sanPhamService.GetAll();
+            var totalProducts = productTable.Rows.Count;
+            var lowStockCount = productTable.Rows.Cast<DataRow>()
+                .Count(r => r.Table.Columns.Contains("TONGTON")
+                    && r["TONGTON"] != DBNull.Value
+                    && Convert.ToInt32(r["TONGTON"]) <= LowStockThreshold);
+
+            var customerTable = _khachHangService.GetAll();
+            var totalCustomers = customerTable.Rows.Count;
+
+            var kpiProducts = CreateStatsCard($"{totalProducts:N0}", "Tổng sản phẩm", "📦", Color.FromArgb(59, 130, 246));
+            var kpiLowStock = CreateStatsCard($"{lowStockCount:N0}", "Tồn thấp", "⚠️", Color.FromArgb(239, 68, 68));
+            var kpiCustomers = CreateStatsCard($"{totalCustomers:N0}", "Khách hàng", "👥", Color.FromArgb(14, 116, 144));
+            var kpiRevenue = CreateStatsCard($"{doanhThu:N0} VNĐ", "Doanh thu hôm nay", "💰", Color.FromArgb(16, 185, 129));
 
             var kpiRow = new FlowLayoutPanel
             {
-                Location = new Point(30, 220),
-                Size = new Size(1100, 130),
+                Location = new Point(30, 120),
+                Size = new Size(1100, 150),
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
                 AutoScroll = false,
@@ -440,16 +454,44 @@ namespace CLOTHES
                 Padding = new Padding(0)
             };
 
-            kpiRevenue.Size = new Size(320, 100);
-            kpiOrders.Size = new Size(320, 100);
+            kpiProducts.Size = new Size(250, 130);
+            kpiLowStock.Size = new Size(250, 130);
+            kpiCustomers.Size = new Size(250, 130);
+            kpiRevenue.Size = new Size(250, 130);
 
+            kpiProducts.Margin = new Padding(0, 0, 16, 0);
+            kpiLowStock.Margin = new Padding(0, 0, 16, 0);
+            kpiCustomers.Margin = new Padding(0, 0, 16, 0);
             kpiRevenue.Margin = new Padding(0, 0, 16, 0);
-            kpiOrders.Margin = new Padding(0, 0, 16, 0);
 
+            kpiRow.Controls.Add(kpiProducts);
+            kpiRow.Controls.Add(kpiLowStock);
+            kpiRow.Controls.Add(kpiCustomers);
             kpiRow.Controls.Add(kpiRevenue);
-            kpiRow.Controls.Add(kpiOrders);
 
-            dashboardPanel.Controls.AddRange(new Control[] { titleLabel, welcomeCard, kpiRow });
+            var alertsCard = CreateListCard("Cảnh báo tồn kho", new Size(520, 220), out var alertsList);
+            var recentCard = CreateListCard("Đơn hàng gần đây", new Size(520, 220), out var recentList);
+
+            var infoRow = new FlowLayoutPanel
+            {
+                Location = new Point(30, 290),
+                Size = new Size(1100, 240),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoScroll = false,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+
+            alertsCard.Margin = new Padding(0, 0, 20, 0);
+            recentCard.Margin = new Padding(0, 0, 20, 0);
+            infoRow.Controls.Add(alertsCard);
+            infoRow.Controls.Add(recentCard);
+
+            PopulateStockAlerts(alertsList, productTable);
+            PopulateRecentOrders(recentList);
+
+            dashboardPanel.Controls.AddRange(new Control[] { titleLabel, kpiRow, infoRow });
             panelMain.Controls.Add(dashboardPanel);
         }
 
@@ -574,6 +616,7 @@ namespace CLOTHES
                 Font = new Font("Segoe UI Emoji", 24, FontStyle.Regular),
                 ForeColor = Color.White,
                 AutoSize = true,
+                BackColor = Color.Transparent,
                 Location = new Point(20, 15),
                 UseCompatibleTextRendering = false
             };
@@ -584,6 +627,7 @@ namespace CLOTHES
                 Font = new Font("Segoe UI", 20, FontStyle.Bold),
                 ForeColor = Color.White,
                 AutoSize = true,
+                BackColor = Color.Transparent,
                 Location = new Point(20, 50),
                 UseCompatibleTextRendering = false
             };
@@ -594,12 +638,119 @@ namespace CLOTHES
                 Font = new Font("Segoe UI", 11, FontStyle.Regular),
                 ForeColor = Color.FromArgb(240, 240, 255),
                 AutoSize = true,
+                BackColor = Color.Transparent,
                 Location = new Point(20, 85),
                 UseCompatibleTextRendering = false
             };
 
             card.Controls.AddRange(new Control[] { iconLabel, valueLabel, labelText });
             return card;
+        }
+
+        private Panel CreateListCard(string title, Size size, out FlowLayoutPanel listHost)
+        {
+            var card = new Panel
+            {
+                Size = size,
+                BackColor = Color.White,
+                Padding = new Padding(16),
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular)
+            };
+
+            card.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+                using var path = CreateRoundedRectangle(card.ClientRectangle, 14);
+                using var brush = new SolidBrush(Color.White);
+                e.Graphics.FillPath(brush, path);
+                using var pen = new Pen(Color.FromArgb(226, 232, 240), 1);
+                e.Graphics.DrawPath(pen, path);
+            };
+
+            var titleLabel = new Label
+            {
+                Text = title,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(30, 41, 59),
+                AutoSize = true,
+                Location = new Point(16, 12),
+                UseCompatibleTextRendering = false
+            };
+
+            listHost = new FlowLayoutPanel
+            {
+                Location = new Point(16, 44),
+                Size = new Size(size.Width - 32, size.Height - 60),
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+
+            card.Controls.Add(titleLabel);
+            card.Controls.Add(listHost);
+            return card;
+        }
+
+        private void PopulateStockAlerts(FlowLayoutPanel listHost, DataTable productTable)
+        {
+            var lowStock = productTable.Rows.Cast<DataRow>()
+                .Where(r => r.Table.Columns.Contains("TONGTON")
+                    && r["TONGTON"] != DBNull.Value
+                    && Convert.ToInt32(r["TONGTON"]) <= LowStockThreshold)
+                .OrderBy(r => Convert.ToInt32(r["TONGTON"]))
+                .Take(6)
+                .ToList();
+
+            if (lowStock.Count == 0)
+            {
+                AddListItem(listHost, "Không có cảnh báo tồn kho.", Color.FromArgb(100, 116, 139));
+                return;
+            }
+
+            foreach (var row in lowStock)
+            {
+                var name = row["TENSP"].ToString() ?? string.Empty;
+                var ton = Convert.ToInt32(row["TONGTON"]);
+                var isOut = ton == 0;
+                var prefix = isOut ? "Hết hàng" : "Tồn thấp";
+                var color = isOut ? Color.FromArgb(220, 38, 38) : Color.FromArgb(234, 88, 12);
+                AddListItem(listHost, $"{prefix}: {name} (Tồn {ton})", color);
+            }
+        }
+
+        private void PopulateRecentOrders(FlowLayoutPanel listHost)
+        {
+            var orders = _hoaDonService.GetHoaDonList(null, null, null);
+            if (orders.Rows.Count == 0)
+            {
+                AddListItem(listHost, "Chưa có đơn hàng gần đây.", Color.FromArgb(100, 116, 139));
+                return;
+            }
+
+            foreach (var row in orders.Rows.Cast<DataRow>().Take(6))
+            {
+                var soHd = row["SOHD"] == DBNull.Value ? "--" : row["SOHD"].ToString();
+                var ngay = row["NGHD"] == DBNull.Value ? "" : Convert.ToDateTime(row["NGHD"]).ToString("dd/MM/yyyy");
+                var tongTien = row["TONGTIEN2"] == DBNull.Value ? 0m : Convert.ToDecimal(row["TONGTIEN2"]);
+                AddListItem(listHost, $"HD #{soHd} • {ngay} • {tongTien:N0} VNĐ", Color.FromArgb(30, 41, 59));
+            }
+        }
+
+        private static void AddListItem(FlowLayoutPanel listHost, string text, Color color)
+        {
+            var label = new Label
+            {
+                Text = text,
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                ForeColor = color,
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, 8),
+                UseCompatibleTextRendering = false
+            };
+            listHost.Controls.Add(label);
         }
 
         private Panel CreateCustomerCard(string name, string phone, string category, Color accentColor)

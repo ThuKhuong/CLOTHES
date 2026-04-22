@@ -105,6 +105,11 @@ public class FrmKhuyenMaiEdit : Form
         AcceptButton = btnOk;
         CancelButton = btnCancel;
 
+        var minDate = DateTime.Today;
+        dtBd.MinDate = minDate;
+        dtKt.MinDate = minDate;
+        dtBd.ValueChanged += (_, __) => dtKt.MinDate = dtBd.Value.Date;
+
         btnOk.Click += (_, __) =>
         {
             var ma = (txtMa.Text ?? string.Empty).Trim();
@@ -118,6 +123,18 @@ public class FrmKhuyenMaiEdit : Form
             if (string.IsNullOrWhiteSpace(ten))
             {
                 MessageBox.Show("Vui lòng nhập Tên KM.");
+                DialogResult = DialogResult.None;
+                return;
+            }
+            if (dtBd.Value.Date < DateTime.Today)
+            {
+                MessageBox.Show("Ngày bắt đầu không được nhỏ hơn hôm nay.");
+                DialogResult = DialogResult.None;
+                return;
+            }
+            if (dtKt.Value.Date < DateTime.Today)
+            {
+                MessageBox.Show("Ngày kết thúc không được nhỏ hơn hôm nay.");
                 DialogResult = DialogResult.None;
                 return;
             }

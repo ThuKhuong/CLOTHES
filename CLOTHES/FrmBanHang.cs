@@ -17,6 +17,8 @@ public class FrmBanHang : Form
     private readonly NguoiDungDto? _currentUser;
 
     private DataTable? _searchCache;
+    private DataTable? _khachHangSource;
+    private bool _isFilteringKhachHang;
 
     private ComboBox cboNhanVien = null!;
     private ComboBox cboKhachHang = null!;
@@ -236,7 +238,13 @@ public class FrmBanHang : Form
         header.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         cboNhanVien = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
-        cboKhachHang = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+        cboKhachHang = new ComboBox
+        {
+            Dock = DockStyle.Fill,
+            DropDownStyle = ComboBoxStyle.DropDown,
+            AutoCompleteMode = AutoCompleteMode.None,
+            AutoCompleteSource = AutoCompleteSource.None
+        };
         cboHinhThuc = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
         cboKhuyenMai = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
         txtMaKm = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "Nhập mã KM rồi Enter (vd: KM10)..." };
@@ -305,6 +313,8 @@ public class FrmBanHang : Form
             none["DIEM"] = 0;
         dtKh.Rows.InsertAt(none, 0);
 
+        _khachHangSource = dtKh;
+
         cboKhachHang.DisplayMember = "HOTEN";
         cboKhachHang.ValueMember = "MAKH";
         cboKhachHang.DataSource = dtKh;
@@ -322,6 +332,13 @@ public class FrmBanHang : Form
             RefreshDiemHint();
             RecalcTong();
         };
+        cboKhachHang.TextUpdate += (_, __) => ApplyKhachHangFilter();
+        cboKhachHang.KeyDown += (_, e) =>
+        {
+            if (e.KeyCode != Keys.Enter) return;
+            e.SuppressKeyPress = true;
+            TrySelectKhachHangByName(cboKhachHang.Text);
+        };
         txtMaKm.KeyDown += (_, e) =>
         {
             if (e.KeyCode != Keys.Enter) return;
@@ -335,6 +352,85 @@ public class FrmBanHang : Form
         };
 
         RefreshSearch();
+    }
+
+    private void TrySelectKhachHangByName(string? text)
+    {
+        var dt = cboKhachHang.DataSource as DataTable ?? _khachHangSource;
+        if (dt == null) return;
+
+        var keyword = (text ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(keyword)) return;
+
+        static bool IsGuestRow(DataRow r)
+        {
+            var name = r["HOTEN"]?.ToString() ?? string.Empty;
+            return r["MAKH"] == DBNull.Value && name.Contains("Khách lẻ", StringComparison.OrdinalIgnoreCase);
+        }
+
+        var exact = dt.Rows
+            .Cast<DataRow>()
+            .FirstOrDefault(r => string.Equals(r["HOTEN"]?.ToString(), keyword, StringComparison.OrdinalIgnoreCase));
+        if (exact != null && (!IsGuestRow(exact) || keyword.Equals("(Khách lẻ)", StringComparison.OrdinalIgnoreCase)))
+        {
+            cboKhachHang.SelectedIndex = dt.Rows.IndexOf(exact);
+            return;
+        }
+
+        var matches = dt.Rows
+            .Cast<DataRow>()
+            .Where(r => (r["HOTEN"]?.ToString() ?? string.Empty)
+                .Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            .Where(r => !IsGuestRow(r))
+            .ToList();
+
+        if (matches.Count == 1)
+        {
+            cboKhachHang.SelectedIndex = dt.Rows.IndexOf(matches[0]);
+        }
+    }
+
+    private void ApplyKhachHangFilter()
+    {
+        if (_isFilteringKhachHang) return;
+        var dt = _khachHangSource;
+        if (dt == null) return;
+
+        var keyword = (cboKhachHang.Text ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            SetKhachHangDataSource(dt, cboKhachHang.Text);
+            return;
+        }
+
+        var view = new DataView(dt)
+        {
+            RowFilter = $"HOTEN LIKE '%{keyword.Replace("'", "''")}%'"
+        };
+
+        var filtered = view.ToTable();
+        SetKhachHangDataSource(filtered, cboKhachHang.Text);
+    }
+
+    private void SetKhachHangDataSource(DataTable data, string? text)
+    {
+        _isFilteringKhachHang = true;
+        try
+        {
+            cboKhachHang.BeginUpdate();
+            cboKhachHang.DataSource = data;
+            cboKhachHang.DisplayMember = "HOTEN";
+            cboKhachHang.ValueMember = "MAKH";
+            cboKhachHang.Text = text ?? string.Empty;
+            cboKhachHang.SelectionStart = cboKhachHang.Text.Length;
+            cboKhachHang.DroppedDown = true;
+            cboKhachHang.Invalidate();
+        }
+        finally
+        {
+            cboKhachHang.EndUpdate();
+            _isFilteringKhachHang = false;
+        }
     }
 
     private void ApplyMaKm()
@@ -683,6 +779,8 @@ public class FrmBanHang : Form
             try
             {
                 ShowInvoiceInHost(soHd, askPrint == DialogResult.Yes);
+                var main = TopLevelControl as FrmMain ?? Parent?.FindForm() as FrmMain;
+                main?.SelectMenu("ĐƠN HÀNG");
             }
             catch (Exception ex)
             {

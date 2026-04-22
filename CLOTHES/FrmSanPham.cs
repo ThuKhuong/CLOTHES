@@ -159,7 +159,7 @@ namespace CLOTHES
             var card = new Panel
             {
                 Size = new Size(w, h),
-                BackColor = isActive ? Color.White : Color.FromArgb(243, 244, 246),
+                BackColor = Color.White,
                 Cursor = Cursors.Hand,
                 Tag = maSp
             };
@@ -182,8 +182,8 @@ namespace CLOTHES
 
             var pic = new PictureBox
             {
-                Location = new Point(22, 18),
-                Size = new Size(w - 44, 150),
+                Location = new Point(16, 12),
+                Size = new Size(w - 32, 170),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BackColor = Color.Transparent
             };
@@ -192,30 +192,28 @@ namespace CLOTHES
             var lblName = new Label
             {
                 Text = tenSp,
-                Location = new Point(22, 178),
-                Size = new Size(w - 44, 44),
-                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
-                ForeColor = isActive ? Color.FromArgb(31, 41, 55) : Color.FromArgb(107, 114, 128)
+                Location = new Point(16, 188),
+                Size = new Size(w - 32, 38),
+                Font = new Font("Segoe UI", 11f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(31, 41, 55)
             };
 
             var lblPrice = new Label
             {
                 Text = priceText,
-                Location = new Point(22, 228),
-                Size = new Size(w - 44, 24),
-                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
-                ForeColor = isActive ? Color.FromArgb(17, 24, 39) : Color.FromArgb(107, 114, 128)
+                Location = new Point(16, 228),
+                Size = new Size(w - 32, 24),
+                Font = new Font("Segoe UI", 11f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(17, 24, 39)
             };
 
             var lblStock = new Label
             {
                 Text = $"Tồn: {tongTon}",
-                Location = new Point(22, 252),
-                Size = new Size(w - 44, 22),
+                Location = new Point(16, 254),
+                Size = new Size(w - 32, 22),
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                ForeColor = isActive
-                    ? (tongTon <= LowStockThreshold ? Color.FromArgb(220, 38, 38) : Color.FromArgb(100, 116, 139))
-                    : Color.FromArgb(148, 163, 184)
+                ForeColor = tongTon <= LowStockThreshold ? Color.FromArgb(220, 38, 38) : Color.FromArgb(100, 116, 139)
             };
 
             Label? lblStatus = null;
@@ -229,7 +227,7 @@ namespace CLOTHES
                     ForeColor = Color.FromArgb(185, 28, 28),
                     Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
                     Padding = new Padding(6, 2, 6, 2),
-                    Location = new Point(w - 22 - 110, 16)
+                    Location = new Point(22, 160)
                 };
             }
 
@@ -262,7 +260,10 @@ namespace CLOTHES
             card.Controls.Add(lblPrice);
             card.Controls.Add(lblStock);
             if (lblStatus != null)
+            {
                 card.Controls.Add(lblStatus);
+                lblStatus.BringToFront();
+            }
 
             return card;
         }

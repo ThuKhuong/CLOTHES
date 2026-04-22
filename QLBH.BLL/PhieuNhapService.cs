@@ -15,6 +15,10 @@ public class PhieuNhapService
 
     public DataTable GetAllNcc() => _dal.GetAllNcc();
 
+    public DataTable GetAllNccDetails() => _dal.GetAllNccDetails();
+
+    public string GetNextMaNcc() => _dal.GetNextMaNcc();
+
     public DataTable GetAllNhanVien() => _dal.GetAllNhanVien();
 
     public (bool ok, string message, string? maNcc) AddNcc(string tenNcc, string? sdt, string? diaChi, string? email)
@@ -29,6 +33,30 @@ public class PhieuNhapService
             string.IsNullOrWhiteSpace(email) ? null : email.Trim());
 
         return rows > 0 ? (true, "Thêm nhà cung cấp thành công.", ma) : (false, "Không thể thêm nhà cung cấp.", null);
+    }
+
+    public (bool ok, string message) UpdateNcc(string maNcc, string tenNcc, string? sdt, string? diaChi, string? email)
+    {
+        if (string.IsNullOrWhiteSpace(maNcc))
+            return (false, "Mã nhà cung cấp không hợp lệ.");
+        if (string.IsNullOrWhiteSpace(tenNcc))
+            return (false, "Tên nhà cung cấp không được để trống.");
+
+        var rows = _dal.UpdateNcc(maNcc.Trim(), tenNcc.Trim(),
+            string.IsNullOrWhiteSpace(sdt) ? null : sdt.Trim(),
+            string.IsNullOrWhiteSpace(diaChi) ? null : diaChi.Trim(),
+            string.IsNullOrWhiteSpace(email) ? null : email.Trim());
+
+        return rows > 0 ? (true, "Cập nhật nhà cung cấp thành công.") : (false, "Không thể cập nhật nhà cung cấp.");
+    }
+
+    public (bool ok, string message) DeleteNcc(string maNcc)
+    {
+        if (string.IsNullOrWhiteSpace(maNcc))
+            return (false, "Mã nhà cung cấp không hợp lệ.");
+
+        var rows = _dal.DeleteNcc(maNcc.Trim());
+        return rows > 0 ? (true, "Xóa nhà cung cấp thành công.") : (false, "Không thể xóa nhà cung cấp.");
     }
 
     public DataTable SearchSanPhamChiTiet(string keyword) => _dal.SearchSanPhamChiTiet(keyword);
