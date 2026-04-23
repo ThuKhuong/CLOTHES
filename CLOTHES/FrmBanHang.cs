@@ -321,7 +321,7 @@ public class FrmBanHang : Form
         if (cboKhachHang.Items.Count > 0) cboKhachHang.SelectedIndex = 0;
 
         cboHinhThuc.Items.Clear();
-        cboHinhThuc.Items.AddRange(new object[] { "CASH", "BANK", "MOMO" });
+        cboHinhThuc.Items.AddRange(new object[] { "TIỀN MẶT", "TÀI KHOẢN NGÂN HÀNG", "MOMO" });
         cboHinhThuc.SelectedIndex = 0;
 
         LoadKhuyenMai();

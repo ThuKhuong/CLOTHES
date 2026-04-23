@@ -8,6 +8,7 @@ namespace CLOTHES;
 public class FrmKhuyenMaiEdit : Form
 {
     private readonly KhuyenMaiService _kmService = new();
+    private readonly bool _isEdit;
     private TextBox txtMa = null!;
     private TextBox txtTen = null!;
     private NumericUpDown numPercent = null!;
@@ -32,6 +33,7 @@ public class FrmKhuyenMaiEdit : Form
         DateTime? ngayKt = null,
         bool trangThai = true)
     {
+        _isEdit = !string.IsNullOrWhiteSpace(maKm);
         Text = string.IsNullOrWhiteSpace(maKm) ? "Thêm khuyến mãi" : "Sửa khuyến mãi";
         Font = new Font("Segoe UI", 9F);
         BackColor = Color.White;
@@ -42,6 +44,18 @@ public class FrmKhuyenMaiEdit : Form
         ClientSize = new Size(520, 300);
 
         BuildUi();
+
+        var minDate = DateTime.Today;
+        if (ngayBd.HasValue && ngayBd.Value.Date < minDate)
+        {
+            minDate = ngayBd.Value.Date;
+        }
+        if (ngayKt.HasValue && ngayKt.Value.Date < minDate)
+        {
+            minDate = ngayKt.Value.Date;
+        }
+        dtBd.MinDate = minDate;
+        dtKt.MinDate = minDate;
 
         txtMa.Text = string.IsNullOrWhiteSpace(maKm) ? _kmService.GetNextMaKm() : maKm;
         txtTen.Text = tenKm ?? string.Empty;
@@ -105,9 +119,6 @@ public class FrmKhuyenMaiEdit : Form
         AcceptButton = btnOk;
         CancelButton = btnCancel;
 
-        var minDate = DateTime.Today;
-        dtBd.MinDate = minDate;
-        dtKt.MinDate = minDate;
         dtBd.ValueChanged += (_, __) => dtKt.MinDate = dtBd.Value.Date;
 
         btnOk.Click += (_, __) =>
@@ -126,13 +137,13 @@ public class FrmKhuyenMaiEdit : Form
                 DialogResult = DialogResult.None;
                 return;
             }
-            if (dtBd.Value.Date < DateTime.Today)
+            if (!_isEdit && dtBd.Value.Date < DateTime.Today)
             {
                 MessageBox.Show("Ngày bắt đầu không được nhỏ hơn hôm nay.");
                 DialogResult = DialogResult.None;
                 return;
             }
-            if (dtKt.Value.Date < DateTime.Today)
+            if (!_isEdit && dtKt.Value.Date < DateTime.Today)
             {
                 MessageBox.Show("Ngày kết thúc không được nhỏ hơn hôm nay.");
                 DialogResult = DialogResult.None;

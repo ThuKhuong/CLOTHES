@@ -115,13 +115,17 @@ public class FrmKhuyenMai : Form
             return;
         }
 
+        var ngayBd = Convert.ToDateTime(row["NGAYBD"]);
+        var ngayKt = Convert.ToDateTime(row["NGAYKT"]);
+        var trangThai = Convert.ToBoolean(row["TRANGTHAI"]);
+
         using var f = new FrmKhuyenMaiEdit(
             maKm: row["MAKM"].ToString()!,
             tenKm: row["TENKM"].ToString()!,
             phanTram: Convert.ToInt32(row["PHANTRAM_GIAM"]),
-            ngayBd: Convert.ToDateTime(row["NGAYBD"]),
-            ngayKt: Convert.ToDateTime(row["NGAYKT"]),
-            trangThai: Convert.ToBoolean(row["TRANGTHAI"]));
+            ngayBd: ngayBd,
+            ngayKt: ngayKt,
+            trangThai: trangThai);
 
         if (f.ShowDialog(this) != DialogResult.OK) return;
 

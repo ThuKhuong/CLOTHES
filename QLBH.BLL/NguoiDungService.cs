@@ -62,6 +62,8 @@ public class NguoiDungService
 			return (false, "SĐT chỉ được chứa chữ số.");
 		if (sdt.Length < 9 || sdt.Length > 11)
 			return (false, "SĐT phải từ 9 đến 11 số.");
+		if (_dal.PhoneExists(sdt, maNd))
+			return (false, "SĐT đã tồn tại.");
 
 		var rows = _dal.UpdateInfo(maNd, tenNd, sdt);
 		return rows > 0 ? (true, "Cập nhật thông tin thành công.") : (false, "Không thể cập nhật thông tin.");
@@ -89,6 +91,8 @@ public class NguoiDungService
 			return (false, "SĐT chỉ được chứa chữ số.");
 		if (sdt.Length < 9 || sdt.Length > 11)
 			return (false, "SĐT phải từ 9 đến 11 số.");
+		if (_dal.PhoneExists(sdt))
+			return (false, "SĐT đã tồn tại.");
 		if (_dal.UsernameExists(username))
 			return (false, "Tên đăng nhập đã tồn tại.");
 

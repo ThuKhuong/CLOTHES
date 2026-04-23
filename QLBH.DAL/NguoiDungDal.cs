@@ -71,6 +71,21 @@ WHERE USERNAME = @u";
             return result != null && Convert.ToInt32(result) > 0;
         }
 
+        public bool PhoneExists(string sdt, string? excludeMaNd = null)
+        {
+            var sql = "SELECT COUNT(1) FROM NGUOIDUNG WHERE SDT = @sdt";
+            var parameters = new List<SqlParameter> { new SqlParameter("@sdt", sdt) };
+
+            if (!string.IsNullOrWhiteSpace(excludeMaNd))
+            {
+                sql += " AND MAND <> @mand";
+                parameters.Add(new SqlParameter("@mand", excludeMaNd));
+            }
+
+            var result = Db.Scalar(sql, parameters.ToArray());
+            return result != null && Convert.ToInt32(result) > 0;
+        }
+
         public string GetNextMaNd()
         {
             const string sql = @"SELECT MAX(MAND) FROM NGUOIDUNG WHERE MAND LIKE 'ND%'";
